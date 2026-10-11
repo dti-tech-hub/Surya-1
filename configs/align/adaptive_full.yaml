@@ -1,0 +1,2 @@
+# Full adaptive model (O2+O3): gated MMD + domain weights + preserve + monitor.
+align: {method: mmd, use_gate: true, use_weights: true, use_monitor: true, alpha: 0.5, beta: 0.1, gamma: 0.01, warmup: 1, cond: false}

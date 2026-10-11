@@ -19,6 +19,15 @@ All series tensors are `(B, T, C)` = batch, time, channels. Windows sliced from 
 - Thresholds must never use test labels (val-only).
 - Normalization stats fit on train only.
 
+## Phase 4 — adaptive alignment O2+O3 (implemented, core novelty)
+- Losses: MMD (median-heuristic bandwidths — fixed sigmas saturate in high-dim input space), CORAL, DANN
+  (GRL + Ganin schedule). Combined: L = Lc + a_t*S w_k*L_align + b*Lp + g*Lsparse, warm-up then monitor-adapted.
+- A gate g(z)E[0,1]^d (sigmoid/hard-concrete, L1+entropy); B scale-free weights softmax(-d/mean(d)/tau), tau=1,
+  fit epoch-level on INPUT-space windows (batch rep-space weights were non-discriminative); C normal-only +
+  compactness/margin/no-collapse; D monitor halves alpha + rollbacks on val-proxy degradation; E AdaBN TTA baseline.
+- Ablations: none / mmd / coral / dann / adaptive_full (+cond chamfer option). Evidence: seed0 default-scale
+  uniform-mixed collapses (0.318->0.0) while adaptive reaches 0.444 with related weight 0.67.
+
 ## Phase 3 — contrastive repr O1 (implemented)
 - Encoders TCN/Transformer(attn exposed (B,T))/ResNet1D, (B,T,C)->rep (B,d); TCN/ResNet use max+mean concat
   (spike preservation). Losses: InfoNCE(tau) + TS2Vec-hierarchical + masked-recon aux, config-weighted.

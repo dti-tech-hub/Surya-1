@@ -65,10 +65,15 @@ def generate_domain(
     phase: float = 0.0,
     amp: float = 1.0,
     anomaly_ratio: float = 0.05,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    waveform: str = "sine",  # sine | noise (noise = structureless harmful domain for E4/Phase-4)
+) -> tuple[tuple[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray],
+           tuple[np.ndarray, np.ndarray, np.ndarray]]:
     rng = np.random.default_rng(seed)
-    x = _base_series(rng, T, C, freq, phase, amp)
-    x = x * var_scale + mean + 0.1 * rng.standard_normal((T, C))
+    if waveform == "noise":
+        x = rng.standard_normal((T, C))  # no shared temporal structure
+    else:
+        x = _base_series(rng, T, C, freq, phase, amp)
+        x = x * var_scale + mean + 0.1 * rng.standard_normal((T, C))
     x = x.astype(np.float32)
     # Split FIRST (clean), then inject per split so every split carries ~anomaly_ratio
     # anomalies (guarantees non-empty test positives even on tiny smoke series).
@@ -83,19 +88,24 @@ class SyntheticDataset(BaseTSADDataset):
     name = "synthetic"
 
     def __init__(self, n_domains: int = 3, length: int = 2000, n_channels: int = 4,
-                 anomaly_ratio: float = 0.05, seed: int = 0, harmful_last: bool = False):
+                 anomaly_ratio: float = 0.05, seed: int = 0, harmful_last: bool = False,
+                 harmful_kind: str = "shift"):  # shift | noise (noise = structureless, truly harmful)
         self.n_domains = n_domains
         self.length = length
         self.n_channels = n_channels
         self.anomaly_ratio = anomaly_ratio
         self.seed = seed
         self.harmful_last = harmful_last  # last domain = unrelated distribution (for E4 neg-transfer)
+        self.harmful_kind = harmful_kind
 
     def load(self) -> dict[str, DomainData]:
         out: dict[str, DomainData] = {}
         for k in range(self.n_domains):
             if self.harmful_last and k == self.n_domains - 1:
-                kw = dict(mean=8.0, var_scale=3.0, freq=4.0, phase=2.5, amp=3.0)  # deliberately unrelated
+                if self.harmful_kind == "noise":
+                    kw: dict = dict(waveform="noise")  # no shared structure post-normalization
+                else:
+                    kw = dict(mean=8.0, var_scale=3.0, freq=4.0, phase=2.5, amp=3.0)
             else:
                 kw = dict(mean=0.5 * k, var_scale=1.0 + 0.3 * k, freq=1.0 + 0.25 * k,
                           phase=0.4 * k, amp=1.0 + 0.2 * k)
