@@ -1,0 +1,15 @@
+\begin{table}[h]
+\centering
+\caption{adapt_default}
+\label{tab:adapt_default}
+\begin{tabular}{lllllllll}
+\toprule
+auc\_roc & condition & domain\_weights & mmd\_after & mmd\_before & strict\_f1 & t\_adapted\_f1 & t\_negative\_transfer & t\_transfer\_gain \\
+\midrule
+0.9317 & source-only & [1.0, 1.0] & 0.1605 & 0.0274 & 0.0 &  &  &  \\
+0.9478 & uniform-clean & [1.0] & 0.0501 & 0.0275 & 0.3176 & 0.3176 & False & 0.3176 \\
+0.9307 & uniform-mixed & [0.5, 0.5] & 0.1991 & 0.0274 & 0.0 & 0.0 & False & 0.0 \\
+0.9225 & adaptive-full & [0.674, 0.326] & 0.1841 & 0.0274 & 0.4444 & 0.4444 & False & 0.4444 \\
+\bottomrule
+\end{tabular}
+\end{table}

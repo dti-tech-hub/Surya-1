@@ -11,8 +11,14 @@
 - [x] Phase 7 — API + dashboard (2026-10-11)
 - [x] Phase 8 — reproducibility/docs (2026-10-11)
 - [x] Phase 9 — Colab/Kaggle (2026-10-11)
-- [ ] Phase 10 — report generator
+- [x] Phase 10 — report generator (2026-10-11)
 - [ ] Phase 11 — final audit
+
+## Phase 10 log
+- 55/55 pass; ruff+black clean. `make report` -> reports/final/: 7 .tex tables, 14 figs + summary PDF,
+  results/ablation/limitations drafts. Prose uses ONLY run CSVs (e.g. adaptive 0.250 smoke / 0.444 default);
+  missing -> NOT RUN (tested: empty build, fixture numbers, rerun idempotence/no self-ingestion).
+- Slide set: reports/final/slides/. Conference plan: docs/CONFERENCE.md (narrow claim, venue ladder, TODOs).
 
 ## Phase 9 log
 - notebooks/run_on_{colab,kaggle}.ipynb (JSON-validated, code bodies compile; shell magics are IPython).
