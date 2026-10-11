@@ -46,6 +46,15 @@ flowchart LR
   explicitly labeled pipeline-proof; paper claims await full runs. Random-encoder AUC shows data easiness —
   reported, not hidden.
 
+## Phase 11 — final audit (implemented)
+- `scripts/audit.py` -> `reports/audit.md`, 15/15 PASS: leakage (norm-guard, default-unlabeled,
+  label-free steps, val-only thresholds), reproducibility (seed-identical data + init), gates, O1-O4 map.
+- Closed in audit: weak supervision (SupCon on weak_frac of anomalous windows, `loss.w_sup` +
+  `data.weak_labels`, both default 0); KernelSHAP backend (DeepSHAP incompatible with BatchNorm TCNs);
+  `DATA=` wired (`train`/`eval` via `data/loaders.py`, graceful missing-data errors).
+- Explicit remaining gaps: cond-alignment/DANN-CORAL E2E on GPU box, 5-seed stats, real-data numbers,
+  VUS/affiliation, MLflow E2E, `make` absent on Windows (python equivalents verified).
+
 ## Phase 7 — API + dashboard (implemented)
 - Bundle = one dir (encoder.pt, prototypes.npy, stats.json, config.yaml); /detect (JSON/CSV, pydantic,
   shape errors 400); /explain (full JSON object, 10-step IG for latency); /domains (bundle stats);

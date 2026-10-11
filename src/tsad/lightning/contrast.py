@@ -13,18 +13,24 @@ from torch import nn
 from torch.utils.data import DataLoader, Dataset
 
 from tsad.data.augment import AugmentPipeline
-from tsad.losses.contrastive import info_nce, masked_mse, ts2vec_loss
+from tsad.losses.contrastive import info_nce, masked_mse, sup_contrastive, ts2vec_loss
 from tsad.models.encoders import make_encoder
 
 
 class WindowDataset(Dataset):
     def __init__(
-        self, windows: np.ndarray, pipe: AugmentPipeline, mask_ratio: float = 0.15, seed: int = 0
+        self,
+        windows: np.ndarray,
+        pipe: AugmentPipeline,
+        mask_ratio: float = 0.15,
+        seed: int = 0,
+        sup_labels: np.ndarray | None = None,  # (N,) -1 unknown / 0 / 1; None = fully unlabeled
     ):
         self.X = windows.astype(np.float32)
         self.pipe = pipe
         self.mask_ratio = mask_ratio
         self.seed = seed
+        self.sup = None if sup_labels is None else np.asarray(sup_labels, dtype=np.int64)
 
     def __len__(self):
         return len(self.X)
@@ -35,7 +41,14 @@ class WindowDataset(Dataset):
         v1, v2 = self.pipe.two_views(x)
         T = x.shape[0]
         m = (rng.random(T) < self.mask_ratio).astype(np.float32)
-        return torch.from_numpy(v1), torch.from_numpy(v2), torch.from_numpy(x), torch.from_numpy(m)
+        s = np.int64(-1) if self.sup is None else np.int64(self.sup[i])
+        return (
+            torch.from_numpy(v1),
+            torch.from_numpy(v2),
+            torch.from_numpy(x),
+            torch.from_numpy(m),
+            s,
+        )
 
 
 class ContrastModule(L.LightningModule):
@@ -49,6 +62,7 @@ class ContrastModule(L.LightningModule):
         w_nce: float = 1.0,
         w_ts2vec: float = 0.0,
         w_mask: float = 0.0,
+        w_sup: float = 0.0,  # weak supervision weight; 0 = labels never touched
         lr: float = 1e-3,
         hid: int = 32,
     ):
@@ -58,7 +72,7 @@ class ContrastModule(L.LightningModule):
         self.proj = nn.Sequential(nn.Linear(d, d), nn.ReLU(), nn.Linear(d, p))
         self.dec = nn.Linear(hid, n_ch)  # per-step recon from tokens (masked aux)
 
-    def _loss(self, v1, v2, x, m):
+    def _loss(self, v1, v2, x, m, s=None):
         o1, o2 = self.enc(v1), self.enc(v2)
         z1, z2 = self.proj(o1["rep"]), self.proj(o2["rep"])
         loss = 0.0
@@ -70,17 +84,21 @@ class ContrastModule(L.LightningModule):
             # decode masked view1 tokens back to clean x
             pr = self.dec(o1["tokens"])
             loss = loss + self.hparams.w_mask * masked_mse(pr, x, m)
+        if self.hparams.w_sup > 0 and s is not None and bool((s >= 0).any()):
+            z = torch.cat([z1, z2], dim=0)
+            y = torch.cat([s, s], dim=0).long()
+            loss = loss + self.hparams.w_sup * sup_contrastive(z, y, self.hparams.tau)
         return loss
 
     def training_step(self, batch, _):
-        v1, v2, x, m = batch
-        loss = self._loss(v1, v2, x, m)
+        v1, v2, x, m, s = batch
+        loss = self._loss(v1, v2, x, m, s)
         self.log("train_loss", loss, prog_bar=True)
         return loss
 
     def validation_step(self, batch, _):
-        v1, v2, x, m = batch
-        self.log("val_loss", self._loss(v1, v2, x, m), prog_bar=True)
+        v1, v2, x, m, s = batch
+        self.log("val_loss", self._loss(v1, v2, x, m, s), prog_bar=True)
 
     def configure_optimizers(self):
         opt = torch.optim.AdamW(self.parameters(), lr=self.hparams.lr)
@@ -118,12 +136,25 @@ class ContrastModule(L.LightningModule):
 
 
 def make_loaders(
-    tr_w: np.ndarray, va_w: np.ndarray, augments: list[str], batch: int, seed: int = 0
+    tr_w: np.ndarray,
+    va_w: np.ndarray,
+    augments: list[str],
+    batch: int,
+    seed: int = 0,
+    tr_sup: np.ndarray | None = None,  # weak labels for train windows; None = unlabeled
+    va_sup: np.ndarray | None = None,
 ) -> tuple[DataLoader, DataLoader]:
     pipe = AugmentPipeline(augments or ["jitter"], seed=seed)
     return (
         DataLoader(
-            WindowDataset(tr_w, pipe, seed=seed), batch_size=batch, shuffle=True, num_workers=0
+            WindowDataset(tr_w, pipe, seed=seed, sup_labels=tr_sup),
+            batch_size=batch,
+            shuffle=True,
+            num_workers=0,
         ),
-        DataLoader(WindowDataset(va_w, pipe, seed=seed + 1), batch_size=batch, num_workers=0),
+        DataLoader(
+            WindowDataset(va_w, pipe, seed=seed + 1, sup_labels=va_sup),
+            batch_size=batch,
+            num_workers=0,
+        ),
     )

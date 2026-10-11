@@ -122,4 +122,26 @@ def lime_explain(
     return coefs.reshape(x.shape).astype(np.float64)
 
 
+def kernelshap_explain(
+    score_fn: nn.Module, x: np.ndarray, background: np.ndarray, nsamples: int = 100
+) -> np.ndarray:
+    """KernelSHAP backend over flattened (T*C) features (needs `shap`; slow — small nsamples)."""
+    try:
+        import shap
+    except ImportError as e:
+        raise RuntimeError("shap not installed") from e
+    score_fn.eval()
+    T, C = x.shape
+    bg = np.asarray(background, dtype=float).reshape(len(background), -1)
+
+    def _predict(M: np.ndarray) -> np.ndarray:
+        with torch.no_grad():
+            t = torch.tensor(M.reshape(len(M), T, C).astype(np.float32))
+            return score_fn(t).numpy()
+
+    expl = shap.KernelExplainer(_predict, bg[: min(10, len(bg))])
+    vals = expl.shap_values(x.reshape(-1), nsamples=nsamples)
+    return np.abs(np.asarray(vals).reshape(T, C)).astype(np.float64)
+
+
 ATTRIBUTORS = {"saliency": saliency, "ig": integrated_gradients, "smoothgrad": smoothgrad}

@@ -1,5 +1,5 @@
 model: {encoder: transformer, embedding_dim: 32, proj_dim: 32, num_prototypes: 8}
-loss: {w_nce: 1.0, w_ts2vec: 0.0, w_mask: 0.0, tau: 0.1}
+loss: {w_nce: 1.0, w_ts2vec: 0.0, w_mask: 0.0, w_sup: 0.0, tau: 0.1}
 train: {epochs: 5, batch_size: 64, lr: 0.001}
 augment: [jitter, scaling]
 scoring: {method: kmeans, hybrid_weight: 0.7, smooth_width: 5}

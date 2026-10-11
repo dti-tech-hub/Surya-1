@@ -15,7 +15,6 @@ import numpy as np
 from tsad.baselines import all_baselines
 from tsad.config import load_config
 from tsad.data.normalize import PerDomainNormalizer
-from tsad.data.synthetic import SyntheticDataset
 from tsad.eval.metrics import full_report
 from tsad.eval.report import write_table
 from tsad.eval.threshold import calibrate, select_threshold
@@ -26,13 +25,9 @@ from tsad.seed import set_seed
 def evaluate_baselines(cfg, domains: list[str] | None = None, ae_epochs: int = 1) -> list[dict]:
     """Run all baselines on selected domains. Reusable by E1 (multi-seed)."""
     log = get_logger("eval")
-    ds = SyntheticDataset(
-        int(cfg.data.n_domains),
-        int(cfg.data.length),
-        int(cfg.data.n_channels),
-        float(cfg.data.anomaly_ratio),
-        int(cfg.seed),
-    ).load()
+    from tsad.data.loaders import get_dataset
+
+    ds = get_dataset(str(cfg.data.get("name", "synthetic")), cfg).load()
     rows = []
     W = int(cfg.data.window)
     for did, d in ds.items():

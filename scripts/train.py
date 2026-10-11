@@ -17,7 +17,6 @@ from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint
 
 from tsad.config import load_config, save_config
 from tsad.data.normalize import PerDomainNormalizer
-from tsad.data.synthetic import SyntheticDataset
 from tsad.data.windows import sliding_windows, window_label
 from tsad.eval.metrics import full_report
 from tsad.eval.report import write_table
@@ -31,22 +30,20 @@ from tsad.tracking import Tracker
 from tsad.viz.embed import plot_embeddings
 
 
-def prepare_and_train(cfg, domain_id: str = "domain_0", test_domain_id: str | None = None) -> dict:
+def prepare_and_train(cfg, domain_id: str | None = None, test_domain_id: str | None = None) -> dict:
     """Train contrastive model + build scoring artifacts. Shared by train.py and make_explanations.py.
 
-    domain_id: training (source) domain. test_domain_id: eval domain (None = same domain).
+    domain_id: training (source) domain (None = first domain - needed for real datasets whose
+    ids are machine-*/entity names, not domain_k). test_domain_id: eval domain (None = same domain).
     Cross-domain: per-domain norms (each fit on own train), threshold from SOURCE val
-    (no target labels at all — strictest transfer protocol).
+    (no target labels at all - strictest transfer protocol).
     Returns dict with mod, bank, W, S, te/te_w/tel/starts, te_scores, thr, Zte, d, note.
     """
     log = get_logger("train")
-    ds = SyntheticDataset(
-        int(cfg.data.n_domains),
-        int(cfg.data.length),
-        int(cfg.data.n_channels),
-        float(cfg.data.anomaly_ratio),
-        int(cfg.seed),
-    ).load()
+    from tsad.data.loaders import get_dataset
+
+    ds = get_dataset(str(cfg.data.get("name", "synthetic")), cfg).load()
+    domain_id = domain_id or min(sorted(ds))
     test_domain_id = test_domain_id or domain_id
     dtr, d = ds[domain_id], ds[test_domain_id]
     ntr = PerDomainNormalizer().fit(dtr.train_series)
@@ -69,10 +66,31 @@ def prepare_and_train(cfg, domain_id: str = "domain_0", test_domain_id: str | No
         w_nce=float(cfg.loss.w_nce),
         w_ts2vec=float(cfg.loss.w_ts2vec),
         w_mask=float(cfg.loss.w_mask),
+        w_sup=float(cfg.loss.get("w_sup", 0.0)),
         lr=float(cfg.train.lr),
     )
+    # Weak supervision (off by default): label weak_frac of anomalous train windows (1);
+    # normal windows are assumed-known (0); the rest stay unknown (-1, excluded from sup term).
+    tr_sup = va_sup = None
+    if float(cfg.loss.get("w_sup", 0.0)) > 0:
+        weak_frac = float(cfg.data.get("weak_labels", 0.0))
+        rng = np.random.default_rng(int(cfg.seed))
+        tr_sup = np.where(tr_wl == 0, 0, -1).astype(np.int64)
+        anom_idx = np.where(tr_wl == 1)[0]
+        n_lab = int(len(anom_idx) * weak_frac)
+        if n_lab:
+            tr_sup[rng.choice(anom_idx, n_lab, replace=False)] = 1
+        va_wl = window_label(dtr.val_labels, W, S)
+        va_sup = np.where(va_wl == 0, 0, -1).astype(np.int64)
+        log.info(f"weak supervision on: frac={weak_frac}, labeled={int((tr_sup == 1).sum())}")
     tr_l, va_l = make_loaders(
-        tr_w, va_w, list(cfg.augment or ["jitter"]), int(cfg.train.batch_size), int(cfg.seed)
+        tr_w,
+        va_w,
+        list(cfg.augment or ["jitter"]),
+        int(cfg.train.batch_size),
+        int(cfg.seed),
+        tr_sup,
+        va_sup,
     )
     ckpt = Path("checkpoints")
     ckpt.mkdir(exist_ok=True)
@@ -208,10 +226,10 @@ def main() -> int:
     # ensure Phase-3 defaults exist on older configs
     for k, v in {"encoder": "tcn", "embedding_dim": 8, "num_prototypes": 3}.items():
         cfg.model.setdefault(k, v)
-    for k, v in {"tau": 0.1, "w_nce": 1.0, "w_ts2vec": 0.0, "w_mask": 0.0}.items():
+    for k, v in {"tau": 0.1, "w_nce": 1.0, "w_ts2vec": 0.0, "w_mask": 0.0, "w_sup": 0.0}.items():
         cfg.setdefault("loss", {}).setdefault(k, v) if "loss" in cfg else None
     if "loss" not in cfg:
-        cfg.loss = {"tau": 0.1, "w_nce": 1.0, "w_ts2vec": 0.0, "w_mask": 0.0}
+        cfg.loss = {"tau": 0.1, "w_nce": 1.0, "w_ts2vec": 0.0, "w_mask": 0.0, "w_sup": 0.0}
     if "augment" not in cfg:
         cfg.augment = ["jitter"]
     tr = Tracker(backend=str(cfg.tracking.backend), experiment=str(cfg.tracking.experiment))

@@ -13,7 +13,7 @@ model:
   encoder: tcn
   embedding_dim: 32
   num_prototypes: 8
-loss: {tau: 0.1, w_nce: 1.0, w_ts2vec: 0.0, w_mask: 0.0}
+loss: {tau: 0.1, w_nce: 1.0, w_ts2vec: 0.0, w_mask: 0.0, w_sup: 0.0}
 augment: [jitter, scaling]
 train:
   epochs: 3

@@ -51,6 +51,31 @@ def ts2vec_loss(
     return loss / max(1e-9, tot)
 
 
+def sup_contrastive(z: torch.Tensor, y: torch.Tensor, tau: float = 0.1) -> torch.Tensor:
+    """Supervised contrastive (SupCon-style) over the LABELED subset only.
+
+    z: (2B, p) both views stacked; y: (2B,) int, -1 = unknown (excluded as anchors AND positives,
+    kept as negatives). Unknown-label data never contributes label information.
+    """
+    z = F.normalize(z, dim=1)
+    sim = (z @ z.T) / max(1e-6, tau)
+    sim.fill_diagonal_(-1e9)
+    known = y >= 0
+    if known.sum() < 2:
+        return torch.zeros((), device=z.device)
+    loss: torch.Tensor = torch.zeros(())
+    n = 0
+    idx = torch.where(known)[0]
+    for a in idx.tolist():
+        pos = idx[(y[idx] == y[a]) & (idx != a)]
+        if len(pos) == 0:
+            continue
+        lse = torch.logsumexp(sim[a], dim=0)
+        loss = loss + (-sim[a][pos].mean() + lse)
+        n += 1
+    return loss / max(1, n)
+
+
 def masked_mse(pred: torch.Tensor, target: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
     """pred/target: (B, T, C); mask (B, T) 1 = predict this step."""
     m = mask.unsqueeze(-1).float()

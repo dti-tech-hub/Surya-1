@@ -3,7 +3,9 @@
 import numpy as np
 import torch
 
-from tsad.losses.contrastive import info_nce, masked_mse, ts2vec_loss
+from tsad.data.augment import AugmentPipeline
+from tsad.lightning.contrast import WindowDataset
+from tsad.losses.contrastive import info_nce, masked_mse, sup_contrastive, ts2vec_loss
 from tsad.models.encoders import make_encoder
 from tsad.models.prototype import PrototypeBank
 from tsad.models.scoring import hybrid, map_to_timestamps, smooth
@@ -63,3 +65,26 @@ def test_mapping_and_smoothing():
     assert len(smooth(np.ones(10), 5)) == 10
     h = hybrid(np.array([0.0, 1.0, 2.0]), None)
     assert h[0] < h[2]  # fallback preserves order
+
+
+def test_weak_supervision_wiring():
+    torch.manual_seed(0)
+    z = torch.randn(12, 8)
+    y = torch.tensor([0, 0, 0, 0, -1, -1, 1, 1, -1, 0, 1, -1])
+    z2 = torch.cat([z, z], dim=0)
+    y2 = torch.cat([y, y])
+    assert np.isfinite(float(sup_contrastive(z2, y2)))
+    # grouped embeddings -> lower sup loss than shuffled labels
+    zg = torch.cat([torch.ones(6, 4), -torch.ones(6, 4)], dim=0)
+    yg = torch.tensor([0] * 6 + [1] * 6)
+    l_group = float(sup_contrastive(torch.cat([zg, zg]), torch.cat([yg, yg])))
+    yr = yg[torch.randperm(12)]
+    l_shuf = float(sup_contrastive(torch.cat([zg, zg]), torch.cat([yr, yr])))
+    assert l_group < l_shuf
+    # dataset default = unlabeled (-1); explicit labels pass through
+    X = np.random.default_rng(0).normal(size=(8, 16, 2)).astype(np.float32)
+    d0 = WindowDataset(X, AugmentPipeline(["jitter"], seed=0), seed=0)
+    assert d0[0][-1] == -1  # default off: no labels leak into training
+    sup = np.array([0, 0, 1, -1, 0, 1, -1, 0])
+    d1 = WindowDataset(X, AugmentPipeline(["jitter"], seed=0), seed=0, sup_labels=sup)
+    assert [int(d1[i][-1]) for i in range(8)] == [0, 0, 1, -1, 0, 1, -1, 0]

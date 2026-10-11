@@ -12,7 +12,13 @@
 - [x] Phase 8 — reproducibility/docs (2026-10-11)
 - [x] Phase 9 — Colab/Kaggle (2026-10-11)
 - [x] Phase 10 — report generator (2026-10-11)
-- [ ] Phase 11 — final audit
+- [x] Phase 11 — final audit (2026-10-11)
+
+## Phase 11 log
+- Audit 15/15 PASS (reports/audit.md): leakage x5, reproducibility x2, gates x4, O1-O4 x4.
+- 61 tests pass; ruff+black+mypy clean. Closed: weak supervision (SupCon, default off), KernelSHAP,
+  DATA=smd wiring (graceful missing-data error). Explicit gaps table in audit.md (10 items).
+- Definition of done: make targets verified via python equivalents (no make binary on Windows).
 
 ## Phase 10 log
 - 55/55 pass; ruff+black clean. `make report` -> reports/final/: 7 .tex tables, 14 figs + summary PDF,

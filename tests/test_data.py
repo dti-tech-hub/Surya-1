@@ -3,6 +3,7 @@
 import numpy as np
 import pytest
 
+from tsad.config import load_config
 from tsad.data.augment import AUGMENTS, AugmentPipeline
 from tsad.data.base import DatasetMissingError
 from tsad.data.normalize import PerDomainNormalizer
@@ -98,3 +99,21 @@ def test_missing_datasets_skip_gracefully():
             cls().load()
     with pytest.raises(DatasetMissingError):
         SMDDataset(root="data/does-not-exist-xyz").load()
+
+
+def test_loader_factory():
+    from tsad.data.loaders import get_dataset
+
+    cfg = load_config("configs/smoke.yaml")
+    ds = get_dataset("synthetic", cfg).load()
+    assert len(ds) == 2
+    cfg2 = load_config("configs/smoke.yaml", ["data.name=smd"])
+    try:
+        get_dataset("smd", cfg2).load()
+    except DatasetMissingError as e:
+        assert "OmniAnomaly" in str(e)  # graceful + instructions
+    try:
+        get_dataset("bogus", cfg)
+        raise AssertionError("should raise")
+    except ValueError:
+        pass

@@ -1,6 +1,8 @@
 # Makefile — Windows PowerShell (5.1) compatible via python invocations.
 # All targets use `python -m ...` so they work with or without `make` on PATH.
+# No `make` on this machine? Run the python commands directly (README quick start).
 PY = python
+DATA ?= synthetic
 
 setup:
 	$(PY) -m pip install -r requirements-smoke.txt
@@ -19,10 +21,10 @@ smoke:
 	$(PY) scripts/smoke.py --config configs/smoke.yaml
 
 train:
-	$(PY) scripts/train.py --config configs/default.yaml $(ARGS)
+	$(PY) scripts/train.py --config configs/default.yaml --opt data.name=$(DATA) $(ARGS)
 
 eval:
-	$(PY) scripts/eval.py --config configs/default.yaml $(ARGS)
+	$(PY) scripts/eval.py --config configs/default.yaml --opt data.name=$(DATA) $(ARGS)
 
 explain:
 	$(PY) scripts/make_explanations.py --config configs/default.yaml $(ARGS)

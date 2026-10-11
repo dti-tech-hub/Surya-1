@@ -1,6 +1,7 @@
 """Phase-5 tests: attribution shapes, fidelity on known-GT toy, localization, counterfactual."""
 
 import numpy as np
+import pytest
 from torch import nn
 
 from tsad.explain import metrics as em
@@ -67,3 +68,19 @@ def test_counterfactual_valid_sparse():
     assert cf["valid"] is True and cf["score_after"] < 5.0
     assert 0.0 < cf["frac_changed"] <= 1.0
     assert cf["top_channels"][:2] == [0, 1] or set(cf["top_channels"][:2]) <= {0, 1, 2}
+
+
+def test_shap_backends_shapes():
+    pytest.importorskip("shap")
+    from tsad.explain.attribution import kernelshap_explain
+
+    enc = make_encoder("tcn", 2, d=4)
+    proto = np.random.default_rng(0).normal(size=(2, 4))
+    fn = SoftProtoScore(enc, proto)
+    rng = np.random.default_rng(0)
+    bg = rng.normal(size=(5, 8, 2)).astype(np.float32)
+    x = rng.normal(size=(8, 2)).astype(np.float32)
+    # NOTE: shap.DeepExplainer crashes on BatchNorm TCNs (IndexError inside shap) -> not shipped;
+    # KernelSHAP is model-agnostic and is the supported SHAP backend.
+    k = kernelshap_explain(fn, x, bg, nsamples=50)
+    assert k.shape == x.shape and np.isfinite(k).all()

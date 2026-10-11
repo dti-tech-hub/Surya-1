@@ -44,7 +44,7 @@ def main() -> int:
     for k, v in {"encoder": "tcn", "embedding_dim": 8, "num_prototypes": 3}.items():
         cfg.model.setdefault(k, v)
     if "loss" not in cfg:
-        cfg.loss = {"tau": 0.1, "w_nce": 1.0, "w_ts2vec": 0.0, "w_mask": 0.0}
+        cfg.loss = {"tau": 0.1, "w_nce": 1.0, "w_ts2vec": 0.0, "w_mask": 0.0, "w_sup": 0.0}
     if "augment" not in cfg:
         cfg.augment = ["jitter"]
     set_seed(int(cfg.seed))
