@@ -1,0 +1,6 @@
+# Minimal deps for Phase-0 scaffold: setup+test passes on clean CPU in seconds.
+# Lower bounds only (no == pins) so Python 3.10–3.14 all resolve to wheels.
+numpy>=1.26
+pyyaml>=6.0
+omegaconf>=2.3
+pytest>=8.0

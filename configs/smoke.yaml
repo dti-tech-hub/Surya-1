@@ -1,0 +1,28 @@
+# Smoke config — tiny, finishes in seconds on CPU.
+seed: 0
+device: cpu
+data:
+  name: synthetic
+  n_domains: 2
+  n_channels: 2
+  length: 256
+  window: 32
+  stride: 8
+  anomaly_ratio: 0.05
+model:
+  encoder: tcn
+  embedding_dim: 8
+  num_prototypes: 3
+train:
+  epochs: 1
+  batch_size: 16
+  lr: 0.001
+align:
+  method: none
+  alpha: 0.1
+tracking:
+  backend: "off"
+  experiment: tsad-smoke
+threshold:
+  method: percentile
+  percentile: 95.0

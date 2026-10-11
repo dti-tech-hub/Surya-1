@@ -1,0 +1,20 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+# Distribution / packaging
+build/  dist/  *.egg-info/  .eggs/
+# Virtual envs
+.venv/  venv/  env/
+# Testing / coverage
+.pytest_cache/  .coverage  htmlcov/  coverage.xml
+# Lint / typecheck
+.ruff_cache/  .mypy_cache/
+# Experiment artefacts (large) — never commit
+checkpoints/  mlruns/  reports/results/  reports/figures/  data/  *.ckpt  *.pt
+# Secrets — NEVER commit keys
+.env  *.pem  *.key
+# OS / editor
+.DS_Store  Thumbs.db  .vscode/  .idea/
+# Notebooks checkpoints
+.ipynb_checkpoints/
