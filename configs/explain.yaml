@@ -1,0 +1,11 @@
+# Explainability config (O4). Backends: native torch methods always available;
+# captum/shap/lime used only if installed (lazy imports).
+explain:
+  top_k: 10
+  attribution_methods: [saliency, ig, smoothgrad]  # +captum_ig, +lime if installed
+  ig_steps: 20
+  smoothgrad_n: 10
+  counterfactual: {l1: 0.05, steps: 100, lr: 0.05}
+  prototype: {k_nearest: 2}
+gallery:
+  out: reports/explain_smoke

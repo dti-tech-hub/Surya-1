@@ -19,6 +19,15 @@ All series tensors are `(B, T, C)` = batch, time, channels. Windows sliced from 
 - Thresholds must never use test labels (val-only).
 - Normalization stats fit on train only.
 
+## Phase 5 — explainability O4 (implemented)
+- JSON explanation: prototype nearest/medoid + overlay; attention (B,T) w/ heatmap, unavailable-flag for TCN;
+  native saliency/IG(20 steps)/smoothgrad + lazy captum/SHAP/LIME backends; GD counterfactual (sparse, bounded,
+  plausible train-min/max, validity/sparsity/proximity); cross-domain (per-domain proto dists, gate dims);
+  rule-based NL summary (no LLM).
+- Metrics: deletion-AUC/sufficiency/comprehensiveness, rank-corr + top-k Jaccard stability, P@k/AUPRC
+  localization vs GT masks, CF validity/sparsity/proximity; explainer comparison table in gallery.
+- Score fn for grads: softmin prototype distance (differentiable); baseline = medoid normal window.
+
 ## Phase 4 — adaptive alignment O2+O3 (implemented, core novelty)
 - Losses: MMD (median-heuristic bandwidths — fixed sigmas saturate in high-dim input space), CORAL, DANN
   (GRL + Ganin schedule). Combined: L = Lc + a_t*S w_k*L_align + b*Lp + g*Lsparse, warm-up then monitor-adapted.

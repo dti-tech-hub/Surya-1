@@ -28,7 +28,11 @@ from tsad.eval.report import write_table
 from tsad.viz.embed import plot_embeddings
 
 
-def run_single_domain(cfg, domain_id: str = "domain_0") -> dict:
+def prepare_and_train(cfg, domain_id: str = "domain_0") -> dict:
+    """Train contrastive model + build scoring artifacts. Shared by train.py and make_explanations.py.
+
+    Returns dict with mod, bank, W, S, te/te_w/tel/starts, te_scores, thr, Zte, d, note.
+    """
     log = get_logger("train")
     ds = SyntheticDataset(int(cfg.data.n_domains), int(cfg.data.length), int(cfg.data.n_channels),
                           float(cfg.data.anomaly_ratio), int(cfg.seed)).load()
@@ -100,11 +104,21 @@ def run_single_domain(cfg, domain_id: str = "domain_0") -> dict:
     thr = select_threshold(str(cfg.threshold.method), va_ref_z, None, float(cfg.threshold.percentile))
     rep = full_report(d.test_labels, te_scores, thr)
     log.info(f"contrastive@{domain_id}: strict_f1={rep['strict_f1']:.3f} pa_f1={rep['pa_f1']:.3f}")
-    plot_embeddings(Zte, window_label(d.test_labels, W, S),
+    return {"mod": mod, "bank": bank, "W": W, "S": S, "d": d, "te": te, "te_w": te_w,
+            "tel": d.test_labels, "starts": te_starts, "te_scores": te_scores, "thr": thr,
+            "Zte": Zte, "note": note, "report": rep}
+
+
+def run_single_domain(cfg, domain_id: str = "domain_0") -> dict:
+    """Thin wrapper: train + plot + results row (used by `train` entry point)."""
+    art = prepare_and_train(cfg, domain_id)
+    plot_embeddings(art["Zte"], window_label(art["d"].test_labels, art["W"], art["S"]),
                     f"reports/embed_{cfg.model.encoder}_{domain_id}.png",
                     f"{cfg.model.encoder} {domain_id}")
-    row = {"model": f"contrast-{cfg.model.encoder}", "domain": domain_id, "proto_note": note,
-           **{k: round(float(v), 4) for k, v in rep.items() if isinstance(v, (int, float))}}
+    row = {"model": f"contrast-{cfg.model.encoder}", "domain": domain_id,
+           "proto_note": art["note"],
+           **{k: round(float(v), 4) for k, v in art["report"].items()
+              if isinstance(v, (int, float))}}
     return row
 
 

@@ -6,13 +6,21 @@
 - [x] Phase 2 — eval + baselines (2026-10-11)
 - [x] Phase 3 — contrastive repr O1 (2026-10-11)
 - [x] Phase 4 — adaptive alignment O2+O3 (2026-10-11)
-- [ ] Phase 5 — explainability (O4)
+- [x] Phase 5 — explainability O4 (2026-10-11)
 - [ ] Phase 6 — experiments E1–E8
 - [ ] Phase 7 — API + dashboard
 - [ ] Phase 8 — reproducibility/docs
 - [ ] Phase 9 — Colab/Kaggle
 - [ ] Phase 10 — report generator
 - [ ] Phase 11 — final audit
+
+## Phase 5 log
+- 36/36 tests pass. 6-part JSON explanations (prototype+medoid overlay, attention w/ TCN-unavailable flag,
+  native saliency/IG/smoothgrad + captum/lime optional backends, GD counterfactual, cross-domain, NL summary).
+- Gallery: 10 anomalies -> reports/explain_smoke/{index.html, anomaly_*.png/json, _metrics, _cf_metrics}.
+- REAL metrics: deletion AUC 0.5-0.8 (IG best-ish, saliency sometimes negative on FP windows); localization P@k
+  1.0 on clean hits, nan/0 on FP windows (no GT -> undefined, reported honestly); CF validity 10/10.
+- Fixes: clamp dead-gradient (random init), degenerate box widening, rank-tie-stable stability test.
 
 ## Phase 4 log
 - 32/32 tests pass. MMD(median-heuristic)/CORAL/DANN+GRL+schedule; gate(sigmoid/hard-concrete+sparsity);
