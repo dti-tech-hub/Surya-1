@@ -19,6 +19,13 @@ All series tensors are `(B, T, C)` = batch, time, channels. Windows sliced from 
 - Thresholds must never use test labels (val-only).
 - Normalization stats fit on train only.
 
+## Phase 2 — eval + baselines (implemented)
+- Metrics: strict P/R/F1 + AUC-ROC/PR, PA (flagged inflated), simplified event-wise + Tatbul-style range F1
+  (VUS/affiliation deferred — noted limitation). Thresholds: best-F1(val labels)/percentile/POT/fixed, val-only.
+- Bootstrap CIs + multi-seed mean±std; transfer_report (gain, negative_transfer bool, gap_to_target_only).
+- 8 baselines: zscore/iforest/ocsvm/pca/arima(+numpy AR fallback)/lstm_ae/conv_ae/trans_ae.
+  Contrastive no-adapt model lands in Phase 3 (O1).
+
 ## Phase 1 — data pipeline (implemented)
 - `BaseTSADDataset` → `DomainData`; loaders: synthetic (shift knobs + 6 anomaly types + GT masks),
   SMD (machine), SMAP/MSL (entity), UCR (.npz), SWaT/Yahoo (access-required, graceful `DatasetMissingError`).
