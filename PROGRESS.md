@@ -4,7 +4,7 @@
 - [x] Phase 0 — scaffold (2026-10-11)
 - [x] Phase 1 — data pipeline (2026-10-11)
 - [x] Phase 2 — eval + baselines (2026-10-11)
-- [ ] Phase 3 — contrastive repr (O1)
+- [x] Phase 3 — contrastive repr O1 (2026-10-11)
 - [ ] Phase 4 — adaptive alignment (O2+O3)
 - [ ] Phase 5 — explainability (O4)
 - [ ] Phase 6 — experiments E1–E8
@@ -13,6 +13,14 @@
 - [ ] Phase 9 — Colab/Kaggle
 - [ ] Phase 10 — report generator
 - [ ] Phase 11 — final audit
+
+## Phase 3 log
+- 25/25 tests pass. Contrastive TCN (InfoNCE, Lightning, cosine, clip, early-stop, ckpt) + prototype/kNN/Mahalanobis
+  scoring + hybrid-recon option + t-SNE/UMAP plot saved (reports/embed_tcn_domain_0.png).
+- REAL numbers: default-scale strict_f1=0.229, AUC-ROC=0.919, event_recall=1.0 (finds all events, over-flags ->
+  precision 0.13); trained 3x F1 over random-encoder control (0.069). Smoke (tiny, 2ep): F1=0.074, AUC=0.83.
+- Honest limits: mean-pool dilution of point spikes (fixed partly via max+mean concat); unsupervised-percentile
+  operating point is conservative vs ranking quality (E7 will study thresholds); val-only calibration + guard band added.
 
 ## Phase 2 log
 - 20/20 tests pass; `scripts/eval.py` smoke: 8 baselines x 2 synthetic domains = 16 rows -> reports/baselines_smoke.{csv,md}.

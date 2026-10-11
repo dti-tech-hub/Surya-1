@@ -47,6 +47,16 @@ def pot_threshold(normal_scores: np.ndarray, q: float = 0.98, risk: float = 1e-4
         return t0
 
 
+def calibrate(ref: np.ndarray, scores: np.ndarray) -> tuple[np.ndarray, float, float]:
+    """Standardize scores with NORMAL-val reference stats (val-only, no test leakage).
+
+    Returns (standardized scores, mu, sd). Fit mu/sd on ref once, apply to val AND test.
+    """
+    mu = float(np.mean(ref))
+    sd = float(np.std(ref) + 1e-8)
+    return (np.asarray(scores, dtype=float) - mu) / sd, mu, sd
+
+
 def select_threshold(method: str, val_scores: np.ndarray, val_labels: np.ndarray | None = None,
                      percentile: float = 95.0, fixed: float = 0.5) -> float:
     """Dispatch. val_labels required only for best_f1; others use scores (normal val) only."""

@@ -1,0 +1,2 @@
+domain,event_f1,event_precision,event_recall,model,pa_f1,pa_precision,pa_recall,proto_note,range_f1,range_precision,range_recall,strict_auc_pr,strict_auc_roc,strict_f1,strict_precision,strict_recall,strict_threshold,threshold
+domain_0,1.0,1.0,1.0,contrast-tcn,0.2288,0.1292,1.0,clean-normal-windows,0.7217,0.5646,1.0,0.4484,0.9192,0.2288,0.1292,1.0,1.9834,1.9834

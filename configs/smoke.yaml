@@ -5,7 +5,7 @@ data:
   name: synthetic
   n_domains: 2
   n_channels: 2
-  length: 256
+  length: 1024  # test split ~205 pts -> stable smoke metrics (still <2 min CPU)
   window: 32
   stride: 8
   anomaly_ratio: 0.05
@@ -14,7 +14,7 @@ model:
   embedding_dim: 8
   num_prototypes: 3
 train:
-  epochs: 1
+  epochs: 2
   batch_size: 16
   lr: 0.001
 align:

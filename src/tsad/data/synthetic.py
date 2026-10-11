@@ -27,13 +27,16 @@ def inject_anomalies(
     T, C = x.shape
     labels = np.zeros(T, dtype=np.int64)
     mask = np.zeros((T, C), dtype=np.int64)
-    n_anom = max(1, int(T * anomaly_ratio))
-    per_type = max(1, n_anom // len(ANOMALY_TYPES))
-    for i, kind in enumerate(ANOMALY_TYPES):
+    # Budget anomalous POINTS to ~T*ratio (tiny series get fewer event types so splits keep clean windows)
+    n_types = 6 if T >= 600 else (3 if T >= 200 else 2)
+    kinds = ANOMALY_TYPES[:n_types]
+    per_type = max(1, round(T * anomaly_ratio / n_types / 10))
+    max_len = max(2, min(30, T // 20))  # event lengths scale with series length (smoke-safe)
+    for i, kind in enumerate(kinds):
         for _ in range(per_type):
             c = int(rng.integers(0, C))
-            s = int(rng.integers(0, max(1, T - 40)))
-            L = int(rng.integers(1, 30)) if kind != "point" else 1
+            s = int(rng.integers(0, max(1, T - max_len)))
+            L = int(rng.integers(1, max_len)) if kind != "point" else 1
             e = min(T, s + L)
             if kind == "point":
                 x[s, c] += float(rng.uniform(4, 6)) * (1 if rng.random() > 0.5 else -1)
@@ -44,7 +47,7 @@ def inject_anomalies(
             elif kind == "frequency":
                 x[s:e, c] += np.sin(np.linspace(0, 12 * np.pi, e - s))
             elif kind == "level_shift":
-                x[s:, c] += float(rng.uniform(1.0, 2.0))
+                x[s:e, c] += float(rng.uniform(1.0, 2.0))  # bounded shift (length L, smoke-safe)
             elif kind == "trend":
                 x[s:e, c] += np.linspace(0, 3.0, e - s)
             labels[s:e] = 1
@@ -66,8 +69,14 @@ def generate_domain(
     rng = np.random.default_rng(seed)
     x = _base_series(rng, T, C, freq, phase, amp)
     x = x * var_scale + mean + 0.1 * rng.standard_normal((T, C))
-    x, labels, mask = inject_anomalies(x, rng, anomaly_ratio)
-    return x.astype(np.float32), labels, mask
+    x = x.astype(np.float32)
+    # Split FIRST (clean), then inject per split so every split carries ~anomaly_ratio
+    # anomalies (guarantees non-empty test positives even on tiny smoke series).
+    (tr_x, _), (va_x, _), (te_x, _) = split_series(x, np.zeros(len(x), np.int64))
+    tr_x, tr_y, _ = inject_anomalies(tr_x.copy(), np.random.default_rng(seed + 1), anomaly_ratio)
+    va_x, va_y, _ = inject_anomalies(va_x.copy(), np.random.default_rng(seed + 2), anomaly_ratio)
+    te_x, te_y, te_m = inject_anomalies(te_x.copy(), np.random.default_rng(seed + 3), anomaly_ratio)
+    return (tr_x, tr_y), (va_x, va_y), (te_x, te_y, te_m)
 
 
 class SyntheticDataset(BaseTSADDataset):
@@ -90,10 +99,9 @@ class SyntheticDataset(BaseTSADDataset):
             else:
                 kw = dict(mean=0.5 * k, var_scale=1.0 + 0.3 * k, freq=1.0 + 0.25 * k,
                           phase=0.4 * k, amp=1.0 + 0.2 * k)
-            x, y, m = generate_domain(self.seed + 100 * k, self.length, self.n_channels,
-                                      anomaly_ratio=self.anomaly_ratio, **kw)
-            (tr_x, tr_y), (va_x, va_y), (te_x, te_y) = split_series(x, y)
-            te_m = m[len(tr_x) + len(va_x):]
+            (tr_x, tr_y), (va_x, va_y), (te_x, te_y, te_m) = generate_domain(
+                self.seed + 100 * k, self.length, self.n_channels,
+                anomaly_ratio=self.anomaly_ratio, **kw)
             out[f"domain_{k}"] = DomainData(
                 domain_id=f"domain_{k}", train_series=tr_x, val_series=va_x, test_series=te_x,
                 train_labels=tr_y, val_labels=va_y, test_labels=te_y,

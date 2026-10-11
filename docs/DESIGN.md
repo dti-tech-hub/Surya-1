@@ -19,6 +19,14 @@ All series tensors are `(B, T, C)` = batch, time, channels. Windows sliced from 
 - Thresholds must never use test labels (val-only).
 - Normalization stats fit on train only.
 
+## Phase 3 — contrastive repr O1 (implemented)
+- Encoders TCN/Transformer(attn exposed (B,T))/ResNet1D, (B,T,C)->rep (B,d); TCN/ResNet use max+mean concat
+  (spike preservation). Losses: InfoNCE(tau) + TS2Vec-hierarchical + masked-recon aux, config-weighted.
+- Lightning module (cosine, clip=1.0, early-stop, ckpt, 16-mixed on CUDA), labels UNUSED in training;
+  prototypes fit on normal train windows (assumed-normal) + kNN/Mahalanobis options; window->timestamp mapping,
+  smoothing, val-only calibration + guard band, hybrid emb+recon (when w_mask>0).
+- Evidence: trained F1 3x random-encoder control; default-scale AUC 0.919 / event-recall 1.0.
+
 ## Phase 2 — eval + baselines (implemented)
 - Metrics: strict P/R/F1 + AUC-ROC/PR, PA (flagged inflated), simplified event-wise + Tatbul-style range F1
   (VUS/affiliation deferred — noted limitation). Thresholds: best-F1(val labels)/percentile/POT/fixed, val-only.
