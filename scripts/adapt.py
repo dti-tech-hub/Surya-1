@@ -45,10 +45,10 @@ CONDITIONS = {
 }
 
 
-def prep(cfg, target: str = "domain_0"):
+def prep(cfg, target: str = "domain_0", harmful: bool = True, harmful_kind: str = "noise"):
     ds = SyntheticDataset(int(cfg.data.n_domains), int(cfg.data.length), int(cfg.data.n_channels),
                           float(cfg.data.anomaly_ratio), int(cfg.seed),
-                          harmful_last=True, harmful_kind="noise").load()
+                          harmful_last=harmful, harmful_kind=harmful_kind).load()
     assert target in ds and len(ds) >= 3, "need >=3 domains incl. harmful last"
     src_ids = [i for i in sorted(ds) if i != target]
     norms = {i: PerDomainNormalizer().fit(ds[i].train_series) for i in ds}

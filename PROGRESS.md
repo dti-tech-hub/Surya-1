@@ -7,12 +7,19 @@
 - [x] Phase 3 — contrastive repr O1 (2026-10-11)
 - [x] Phase 4 — adaptive alignment O2+O3 (2026-10-11)
 - [x] Phase 5 — explainability O4 (2026-10-11)
-- [ ] Phase 6 — experiments E1–E8
+- [x] Phase 6 — experiments E1–E8 (2026-10-11)
 - [ ] Phase 7 — API + dashboard
 - [ ] Phase 8 — reproducibility/docs
 - [ ] Phase 9 — Colab/Kaggle
 - [ ] Phase 10 — report generator
 - [ ] Phase 11 — final audit
+
+## Phase 6 log
+- 40/40 tests pass. experiments/{common,e1..e8} + scripts/run_experiment.py (--exp/--all-smoke/--all, --seeds).
+- `make experiments-smoke` equivalent ran E2E in ~2.5 min CPU: e1:9 e2:4 e3:4 e4:4 e5:4 e6:3 e7:4 e8:2 rows,
+  each with CSV+MD+LaTeX(.tex) + F1 bar plots (figs/) + paired t/Wilcoxon helpers (n/a on 1 seed, honestly).
+- Refactors: evaluate_baselines() (E1), prepare_and_train()+run_single_domain() cross-domain (E2),
+  prep(harmful toggle/kind) (E3/E4/E7). Full 5-seed runs target default config (GPU box, Phase 9).
 
 ## Phase 5 log
 - 36/36 tests pass. 6-part JSON explanations (prototype+medoid overlay, attention w/ TCN-unavailable flag,

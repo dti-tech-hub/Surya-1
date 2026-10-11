@@ -1,0 +1,15 @@
+\begin{table}[h]
+\centering
+\caption{Results (mean values)}
+\label{tab:res}
+\begin{tabular}{llllllllllllllllllllllllll}
+\toprule
+ablation & auc\_roc & condition & domain & domain\_weights & event\_f1 & event\_precision & event\_recall & mmd\_after & mmd\_before & model & pa\_f1 & pa\_precision & pa\_recall & proto\_note & range\_f1 & range\_precision & range\_recall & seed & strict\_auc\_pr & strict\_auc\_roc & strict\_f1 & strict\_precision & strict\_recall & strict\_threshold & threshold \\
+\midrule
+enc-tcn &  &  & domain\_0 &  & 1.000 & 1.000 & 1.000 &  &  & contrast-tcn & 0.074 & 0.039 & 1.000 & clean-normal-windows & 0.681 & 0.516 & 1.000 & 0 & 0.121 & 0.809 & 0.074 & 0.039 & 1.000 & 1.717 & 1.717 \\
+enc-transformer &  &  & domain\_0 &  & 1.000 & 1.000 & 1.000 &  &  & contrast-transformer & 0.070 & 0.036 & 1.000 & clean-normal-windows & 0.683 & 0.518 & 1.000 & 0 & 0.034 & 0.234 & 0.070 & 0.036 & 1.000 & 1.475 & 1.475 \\
+align-full & 0.966 & align-full &  & [0.775, 0.225] &  &  &  & 0.063 & 0.011 &  &  &  &  &  &  &  &  & 0 &  &  & 0.237 &  &  &  &  \\
+align-no-gate & 0.802 & align-no-gate &  & [0.775, 0.225] &  &  &  & 0.094 & 0.011 &  &  &  &  &  &  &  &  & 0 &  &  & 0.000 &  &  &  &  \\
+\bottomrule
+\end{tabular}
+\end{table}

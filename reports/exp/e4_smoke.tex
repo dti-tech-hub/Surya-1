@@ -1,0 +1,15 @@
+\begin{table}[h]
+\centering
+\caption{Results (mean values)}
+\label{tab:res}
+\begin{tabular}{lllllllll}
+\toprule
+auc\_roc & condition & dissimilarity & domain\_weights & harmful\_kind & mmd\_after & mmd\_before & seed & strict\_f1 \\
+\midrule
+0.929 & uniform-mixed & 0.000 & [0.5, 0.5] & clean & 0.027 & 0.014 & 0 & 0.154 \\
+0.771 & adaptive-full & 0.000 & [0.666, 0.334] & clean & 0.015 & 0.014 & 0 & 0.000 \\
+0.737 & uniform-mixed & 0.043 & [0.5, 0.5] & noise & 0.055 & 0.011 & 0 & 0.043 \\
+0.908 & adaptive-full & 0.043 & [0.775, 0.225] & noise & 0.078 & 0.011 & 0 & 0.188 \\
+\bottomrule
+\end{tabular}
+\end{table}

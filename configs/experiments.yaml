@@ -1,0 +1,9 @@
+# Experiment orchestration (Phase 6). Full = 5 seeds on default config (GPU box);
+# smoke = 1 seed on smoke config (CPU minutes). Override seeds via --seeds 0 1.
+seeds: [0, 1, 2, 3, 4]
+smoke_seeds: [0]
+adapt_epochs_full: 5
+adapt_epochs_smoke: 3
+e5_encoders: [tcn, transformer, resnet]
+e7_alphas: [0.1, 0.5, 1.0]
+e7_taus: [0.5, 1.0, 2.0]

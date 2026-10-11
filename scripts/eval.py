@@ -20,23 +20,20 @@ from tsad.eval.threshold import select_threshold, calibrate
 from tsad.eval.report import write_table
 
 
-def main() -> int:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--config", default="configs/smoke.yaml")
-    ap.add_argument("--opt", nargs="*", default=[])
-    ap.add_argument("--out", default="reports/baselines")
-    args = ap.parse_args()
-    cfg = load_config(args.config, args.opt)
-    set_seed(int(cfg.seed))
+def evaluate_baselines(cfg, domains: list[str] | None = None,
+                       ae_epochs: int = 1) -> list[dict]:
+    """Run all baselines on selected domains. Reusable by E1 (multi-seed)."""
     log = get_logger("eval")
     ds = SyntheticDataset(int(cfg.data.n_domains), int(cfg.data.length), int(cfg.data.n_channels),
                           float(cfg.data.anomaly_ratio), int(cfg.seed)).load()
     rows = []
     W = int(cfg.data.window)
     for did, d in ds.items():
+        if domains is not None and did not in domains:
+            continue
         norm = PerDomainNormalizer().fit(d.train_series)
         tr, va, te = norm.transform(d.train_series), norm.transform(d.val_series), norm.transform(d.test_series)
-        for bl in all_baselines(window=int(cfg.data.window), epochs=1, seed=int(cfg.seed)):
+        for bl in all_baselines(window=int(cfg.data.window), epochs=ae_epochs, seed=int(cfg.seed)):
             bl.fit(tr)
             va_s, te_s = bl.score(va), bl.score(te)
             va_normal = d.val_labels == 0  # NORMAL val timesteps only (spec: percentile on normal val)
@@ -55,6 +52,18 @@ def main() -> int:
             rows.append({"model": bl.name, "domain": did, **{k: round(float(v), 4) for k, v in rep.items()
                                                              if isinstance(v, (int, float))}})
             log.info(f"{bl.name}@{did}: strict_f1={rep['strict_f1']:.3f} pa_f1={rep['pa_f1']:.3f} (thr={thr:.3f})")
+    return rows
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--config", default="configs/smoke.yaml")
+    ap.add_argument("--opt", nargs="*", default=[])
+    ap.add_argument("--out", default="reports/baselines")
+    args = ap.parse_args()
+    cfg = load_config(args.config, args.opt)
+    set_seed(int(cfg.seed))
+    rows = evaluate_baselines(cfg)
     cp, mp = write_table(rows, args.out)
     print(f"wrote {cp} + {mp} ({len(rows)} rows)")
     return 0

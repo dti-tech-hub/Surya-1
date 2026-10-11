@@ -1,0 +1,15 @@
+\begin{table}[h]
+\centering
+\caption{Results (mean values)}
+\label{tab:res}
+\begin{tabular}{lllllllllllllllllllllll}
+\toprule
+domain & event\_f1 & event\_precision & event\_recall & model & pa\_f1 & pa\_precision & pa\_recall & pair & proto\_note & range\_f1 & range\_precision & range\_recall & seed & strict\_auc\_pr & strict\_auc\_roc & strict\_f1 & strict\_precision & strict\_recall & strict\_threshold & t\_gain\_vs\_targetonly & t\_neg & threshold \\
+\midrule
+domain\_0 & 1.000 & 1.000 & 1.000 & contrast-tcn & 0.074 & 0.039 & 1.000 & domain\_0->domain\_0 (target-only) & clean-normal-windows & 0.681 & 0.516 & 1.000 & 0 & 0.121 & 0.809 & 0.074 & 0.039 & 1.000 & 1.717 &  &  & 1.717 \\
+domain\_1 & 0.800 & 1.000 & 0.667 & contrast-tcn & 0.164 & 0.094 & 0.667 & domain\_1->domain\_1 (target-only) & clean-normal-windows & 0.598 & 0.542 & 0.667 & 0 & 0.120 & 0.620 & 0.164 & 0.094 & 0.667 & 0.802 &  &  & 0.802 \\
+domain\_1->domain\_0 & 0.800 & 0.667 & 1.000 & contrast-tcn & 0.109 & 0.058 & 1.000 & domain\_1->domain\_0 & clean-normal-windows & 0.526 & 0.357 & 1.000 & 0 & 0.163 & 0.875 & 0.109 & 0.058 & 1.000 & 1.532 & 0.035 & False & 1.532 \\
+domain\_0->domain\_1 & 0.800 & 0.667 & 1.000 & contrast-tcn & 0.102 & 0.054 & 1.000 & domain\_0->domain\_1 & clean-normal-windows & 0.521 & 0.353 & 1.000 & 0 & 0.110 & 0.691 & 0.102 & 0.054 & 1.000 & 1.507 & -0.063 & True & 1.507 \\
+\bottomrule
+\end{tabular}
+\end{table}

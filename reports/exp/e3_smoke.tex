@@ -1,0 +1,15 @@
+\begin{table}[h]
+\centering
+\caption{Results (mean values)}
+\label{tab:res}
+\begin{tabular}{lllllll}
+\toprule
+auc\_roc & condition & domain\_weights & mmd\_after & mmd\_before & seed & strict\_f1 \\
+\midrule
+0.804 & source-only & [1.0, 1.0] & 0.070 & 0.011 & 0 & 0.111 \\
+0.795 & uniform-clean & [1.0] & 0.022 & 0.010 & 0 & 0.000 \\
+0.737 & uniform-mixed & [0.5, 0.5] & 0.055 & 0.011 & 0 & 0.043 \\
+0.908 & adaptive-full & [0.775, 0.225] & 0.078 & 0.011 & 0 & 0.188 \\
+\bottomrule
+\end{tabular}
+\end{table}

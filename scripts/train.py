@@ -28,22 +28,29 @@ from tsad.eval.report import write_table
 from tsad.viz.embed import plot_embeddings
 
 
-def prepare_and_train(cfg, domain_id: str = "domain_0") -> dict:
+def prepare_and_train(cfg, domain_id: str = "domain_0", test_domain_id: str | None = None) -> dict:
     """Train contrastive model + build scoring artifacts. Shared by train.py and make_explanations.py.
 
+    domain_id: training (source) domain. test_domain_id: eval domain (None = same domain).
+    Cross-domain: per-domain norms (each fit on own train), threshold from SOURCE val
+    (no target labels at all — strictest transfer protocol).
     Returns dict with mod, bank, W, S, te/te_w/tel/starts, te_scores, thr, Zte, d, note.
     """
     log = get_logger("train")
     ds = SyntheticDataset(int(cfg.data.n_domains), int(cfg.data.length), int(cfg.data.n_channels),
                           float(cfg.data.anomaly_ratio), int(cfg.seed)).load()
-    d = ds[domain_id]
-    norm = PerDomainNormalizer().fit(d.train_series)
-    tr, va, te = (norm.transform(s) for s in (d.train_series, d.val_series, d.test_series))
+    test_domain_id = test_domain_id or domain_id
+    dtr, d = ds[domain_id], ds[test_domain_id]
+    ntr = PerDomainNormalizer().fit(dtr.train_series)
+    nte = PerDomainNormalizer().fit(d.train_series)
+    tr = ntr.transform(dtr.train_series)
+    va = ntr.transform(dtr.val_series)
+    te = nte.transform(d.test_series)
     W, S = int(cfg.data.window), int(cfg.data.stride)
     tr_w = sliding_windows(tr, W, S)
     va_w = sliding_windows(va, W, S)
     te_w = sliding_windows(te, W, S)
-    tr_wl = window_label(d.train_labels, W, S)
+    tr_wl = window_label(dtr.train_labels, W, S)
     te_starts = list(range(0, len(te) - W + 1, S))
 
     mod = ContrastModule(n_ch=tr.shape[1], encoder=str(cfg.model.encoder),
@@ -77,10 +84,10 @@ def prepare_and_train(cfg, domain_id: str = "domain_0") -> dict:
     va_win_scores = bank.score(Zva)
     va_ts = smooth(map_to_timestamps(va_win_scores, list(range(0, len(va) - W + 1, S)),
                                      len(va), W), 5)
-    va_normal = d.val_labels == 0  # unsupervised thresholds: NORMAL val timesteps only
+    va_normal = dtr.val_labels == 0  # SOURCE val (no target labels in transfer)
     # Guard band: mapping/smoothing smears anomaly scores onto neighbours — exclude
     # timesteps within one window of any val anomaly so the reference stays clean.
-    anom_idx = np.where(d.val_labels == 1)[0]
+    anom_idx = np.where(dtr.val_labels == 1)[0]
     if len(anom_idx):
         bad = np.zeros(len(va), bool)
         for a in anom_idx:
@@ -109,13 +116,14 @@ def prepare_and_train(cfg, domain_id: str = "domain_0") -> dict:
             "Zte": Zte, "note": note, "report": rep}
 
 
-def run_single_domain(cfg, domain_id: str = "domain_0") -> dict:
-    """Thin wrapper: train + plot + results row (used by `train` entry point)."""
-    art = prepare_and_train(cfg, domain_id)
+def run_single_domain(cfg, domain_id: str = "domain_0", test_domain_id: str | None = None) -> dict:
+    """Thin wrapper: train + plot + results row (used by `train` entry point and E1/E2)."""
+    art = prepare_and_train(cfg, domain_id, test_domain_id)
+    tag = domain_id if not test_domain_id or test_domain_id == domain_id else f"{domain_id}->{test_domain_id}"
     plot_embeddings(art["Zte"], window_label(art["d"].test_labels, art["W"], art["S"]),
-                    f"reports/embed_{cfg.model.encoder}_{domain_id}.png",
-                    f"{cfg.model.encoder} {domain_id}")
-    row = {"model": f"contrast-{cfg.model.encoder}", "domain": domain_id,
+                    f"reports/embed_{cfg.model.encoder}_{tag.replace('>', '')}.png",
+                    f"{cfg.model.encoder} {tag}")
+    row = {"model": f"contrast-{cfg.model.encoder}", "domain": tag,
            "proto_note": art["note"],
            **{k: round(float(v), 4) for k, v in art["report"].items()
               if isinstance(v, (int, float))}}

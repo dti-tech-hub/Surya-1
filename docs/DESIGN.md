@@ -19,6 +19,15 @@ All series tensors are `(B, T, C)` = batch, time, channels. Windows sliced from 
 - Thresholds must never use test labels (val-only).
 - Normalization stats fit on train only.
 
+## Phase 6 — experiments E1–E8 (implemented)
+- common: seed_cfg/ensure_defaults, save_all (CSV+MD+booktabs TEX), paired t/Wilcoxon, mean±std aggregation,
+  barplot/heatmap. Dispatcher: --exp/--seeds/--all-smoke/--all.
+- E1 baselines-vs-contrast; E2 pairs + gain vs target-only (source-val threshold, zero target labels);
+  E3 none/MMD/CORAL/DANN/adaptive (+CORAL/DANN in full mode); E4 kinds{clean,shift,noise} + dissimilarity axis;
+  E5 encoder + gate/weights/preserve/monitor toggles (+window/k in full); E6 gallery aggregation;
+  E7 alpha×tau grid; E8 params/forward-ms/score-throughput (fit timed separately).
+- Smoke = pipeline proof (1 seed, stats n/a); paper claims need 5-seed full runs (E4 seed-dependence documented).
+
 ## Phase 5 — explainability O4 (implemented)
 - JSON explanation: prototype nearest/medoid + overlay; attention (B,T) w/ heatmap, unavailable-flag for TCN;
   native saliency/IG(20 steps)/smoothgrad + lazy captum/SHAP/LIME backends; GD counterfactual (sparse, bounded,
