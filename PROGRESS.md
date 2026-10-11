@@ -10,9 +10,15 @@
 - [x] Phase 6 — experiments E1–E8 (2026-10-11)
 - [x] Phase 7 — API + dashboard (2026-10-11)
 - [x] Phase 8 — reproducibility/docs (2026-10-11)
-- [ ] Phase 9 — Colab/Kaggle
+- [x] Phase 9 — Colab/Kaggle (2026-10-11)
 - [ ] Phase 10 — report generator
 - [ ] Phase 11 — final audit
+
+## Phase 9 log
+- notebooks/run_on_{colab,kaggle}.ipynb (JSON-validated, code bodies compile; shell magics are IPython).
+  Colab: GPU check + Drive mount + clone-or-zip + smoke + E1–E8 loop with CSV skip-resume + gallery/adapt/bundle.
+  Kaggle: input-dataset/zip attach, /kaggle/working outputs.
+- configs/fast.yaml (2000-pt, 3ep) + docs/GPU_RUNS.md (measured CPU + labeled T4 projections, memory, resume).
 
 ## Phase 8 log
 - 52/52 pass; ruff + black + mypy(62 files) clean; coverage 74% (gaps documented: file-needing loaders,
