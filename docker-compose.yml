@@ -1,0 +1,11 @@
+services:
+  api:
+    build: .
+    ports: ["8000:8000"]
+    environment:
+      TSAD_BUNDLES: /app/models/bundle
+  dashboard:
+    build: .
+    ports: ["8501:8501"]
+    command: ["python", "-m", "streamlit", "run", "dashboard/app_streamlit.py", "--server.port", "8501"]
+    depends_on: [api]

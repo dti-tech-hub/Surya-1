@@ -113,7 +113,10 @@ def prepare_and_train(cfg, domain_id: str = "domain_0", test_domain_id: str | No
     log.info(f"contrastive@{domain_id}: strict_f1={rep['strict_f1']:.3f} pa_f1={rep['pa_f1']:.3f}")
     return {"mod": mod, "bank": bank, "W": W, "S": S, "d": d, "te": te, "te_w": te_w,
             "tel": d.test_labels, "starts": te_starts, "te_scores": te_scores, "thr": thr,
-            "Zte": Zte, "note": note, "report": rep}
+            "Zte": Zte, "note": note, "report": rep,
+            "norm_mean": ntr.mean_, "norm_std": ntr.std_, "cal_mu": mu, "cal_sd": sd,
+            "encoder_kind": str(cfg.model.encoder), "emb_d": int(cfg.model.embedding_dim),
+            "smooth_width": int(cfg.get("scoring", {}).get("smooth_width", 5))}
 
 
 def run_single_domain(cfg, domain_id: str = "domain_0", test_domain_id: str | None = None) -> dict:

@@ -1,0 +1,18 @@
+{
+ "norm_mean": [
+  0.038525958077033254,
+  0.0325472855072752
+ ],
+ "norm_std": [
+  0.7497153144709245,
+  0.702747577066302
+ ],
+ "cal_mu": 0.0,
+ "cal_sd": 1.0,
+ "threshold": 0.5582729354500771,
+ "W": 32,
+ "S": 8,
+ "smooth_width": 5,
+ "n_ch": 2,
+ "note": "adapted from synthetic_tcn (prototype refresh, unlabeled)"
+}

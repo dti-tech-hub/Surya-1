@@ -8,11 +8,19 @@
 - [x] Phase 4 — adaptive alignment O2+O3 (2026-10-11)
 - [x] Phase 5 — explainability O4 (2026-10-11)
 - [x] Phase 6 — experiments E1–E8 (2026-10-11)
-- [ ] Phase 7 — API + dashboard
+- [x] Phase 7 — API + dashboard (2026-10-11)
 - [ ] Phase 8 — reproducibility/docs
 - [ ] Phase 9 — Colab/Kaggle
 - [ ] Phase 10 — report generator
 - [ ] Phase 11 — final audit
+
+## Phase 7 log
+- 45/45 tests pass (5 API: health/models/detect-json+csv/shape-validation/explain-schema/domains/adapt).
+- Bundle (encoder.pt + prototypes + norm/cal stats + config) via build_bundle.py; endpoints verified live
+  (uvicorn :8002 /health -> ok). /adapt = prototype-refresh on unlabeled CSV (no retrain; threshold recalibrated).
+- Streamlit dashboard (direct bundle calls, threshold slider, IG panel, CF validity). Dockerfile bakes the
+  bundle at build; compose runs api:8000 + dashboard:8501. Docker binary absent here -> served-test via TestClient
+  + live uvicorn; `docker compose up` documented for demo machine.
 
 ## Phase 6 log
 - 40/40 tests pass. experiments/{common,e1..e8} + scripts/run_experiment.py (--exp/--all-smoke/--all, --seeds).

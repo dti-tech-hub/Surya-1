@@ -34,7 +34,13 @@ experiments:
 	$(PY) scripts/run_experiment.py --config configs/default.yaml --all
 
 app:
-	$(PY) -m uvicorn tsad.api.app:app --host 0.0.0.0 --port 8000
+	$(PY) -m uvicorn tsad.api.app:app --app-dir src --host 0.0.0.0 --port 8000
+
+dashboard:
+	$(PY) -m streamlit run dashboard/app_streamlit.py
+
+bundle:
+	$(PY) scripts/build_bundle.py --config configs/smoke.yaml
 
 report:
 	$(PY) scripts/make_report.py --config configs/default.yaml

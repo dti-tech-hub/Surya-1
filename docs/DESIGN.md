@@ -19,6 +19,13 @@ All series tensors are `(B, T, C)` = batch, time, channels. Windows sliced from 
 - Thresholds must never use test labels (val-only).
 - Normalization stats fit on train only.
 
+## Phase 7 — API + dashboard (implemented)
+- Bundle = one dir (encoder.pt, prototypes.npy, stats.json, config.yaml); /detect (JSON/CSV, pydantic,
+  shape errors 400); /explain (full JSON object, 10-step IG for latency); /domains (bundle stats);
+  /adapt (prototype-refresh: new norm + k-means bank on unlabeled upload, p95 threshold; encoder reused).
+- Dashboard: Streamlit, direct bundle inference, client-side threshold slider. Plotly absent -> st.line_chart
+  + matplotlib (documented substitution). Weights (*.pt) git-ignored; Dockerfile bakes bundle at build.
+
 ## Phase 6 — experiments E1–E8 (implemented)
 - common: seed_cfg/ensure_defaults, save_all (CSV+MD+booktabs TEX), paired t/Wilcoxon, mean±std aggregation,
   barplot/heatmap. Dispatcher: --exp/--seeds/--all-smoke/--all.

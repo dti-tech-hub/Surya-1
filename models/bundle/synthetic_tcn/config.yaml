@@ -1,0 +1,34 @@
+seed: 0
+device: cpu
+data:
+  name: synthetic
+  n_domains: 2
+  n_channels: 2
+  length: 1024
+  window: 32
+  stride: 8
+  anomaly_ratio: 0.05
+model:
+  encoder: tcn
+  embedding_dim: 8
+  num_prototypes: 3
+train:
+  epochs: 2
+  batch_size: 16
+  lr: 0.001
+align:
+  method: none
+  alpha: 0.1
+tracking:
+  backend: 'off'
+  experiment: tsad-smoke
+threshold:
+  method: percentile
+  percentile: 95.0
+loss:
+  tau: 0.1
+  w_nce: 1.0
+  w_ts2vec: 0.0
+  w_mask: 0.0
+augment:
+- jitter
