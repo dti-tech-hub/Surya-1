@@ -1,8 +1,26 @@
 """Phase-7 API tests (FastAPI TestClient + httpx semantics). Needs models/bundle/synthetic_tcn."""
+import os
+import shutil
 import numpy as np
 from fastapi.testclient import TestClient
 
+import pytest
+
 from tsad.api.app import app
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _isolated_bundles(tmp_path_factory):
+    """Copy the built bundle to tmp; point TSAD_BUNDLES there so /adapt writes don't pollute the repo."""
+    tmp = tmp_path_factory.mktemp("bundles")
+    shutil.copytree("models/bundle/synthetic_tcn", tmp / "synthetic_tcn")
+    os.environ["TSAD_BUNDLES"] = str(tmp)
+    import tsad.api.app as appmod
+
+    appmod._BUNDLES.clear()
+    yield
+    appmod._BUNDLES.clear()
+
 
 client = TestClient(app)
 
