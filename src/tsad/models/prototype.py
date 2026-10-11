@@ -1,5 +1,7 @@
 """Prototype bank over NORMAL train embeddings + kNN / Mahalanobis options."""
+
 from __future__ import annotations
+
 import numpy as np
 from sklearn.cluster import KMeans
 
@@ -16,7 +18,9 @@ class PrototypeBank:
         assert len(Z) >= 1
         if self.method == "kmeans":
             k = min(self.k, len(Z))
-            self.proto_ = KMeans(n_clusters=k, n_init=10, random_state=self.seed).fit(Z).cluster_centers_
+            self.proto_ = (
+                KMeans(n_clusters=k, n_init=10, random_state=self.seed).fit(Z).cluster_centers_
+            )
         elif self.method == "knn":
             self.proto_ = Z  # keep all; score = mean dist to k nearest
         else:
@@ -37,5 +41,7 @@ class PrototypeBank:
         return np.sort(D, axis=1)[:, :k].mean(axis=1)
 
     @property
-    def prototypes(self) -> np.ndarray | None:
-        return getattr(self, "proto_", None)
+    def prototypes(self) -> np.ndarray:
+        p = getattr(self, "proto_", None)
+        assert p is not None, "PrototypeBank not fit yet"
+        return np.asarray(p)

@@ -4,13 +4,15 @@
 - percentile / pot: unsupervised, fit on NORMAL val scores only.
 - fixed: literal value from config.
 """
+
 from __future__ import annotations
+
 import numpy as np
+
 from tsad.eval.metrics import prf_from_pred
 
 
-def best_f1_threshold(val_labels: np.ndarray, val_scores: np.ndarray,
-                      grid: int = 100) -> float:
+def best_f1_threshold(val_labels: np.ndarray, val_scores: np.ndarray, grid: int = 100) -> float:
     val_scores = np.asarray(val_scores, dtype=float)
     cands = np.unique(np.quantile(val_scores, np.linspace(0, 1, grid)))
     best_t, best_f = float(cands[-1]), -1.0
@@ -40,8 +42,11 @@ def pot_threshold(normal_scores: np.ndarray, q: float = 0.98, risk: float = 1e-4
 
         c, _, scale = genpareto.fit(exc, floc=0)
         n, n_exc = len(s), len(exc)
-        level = t0 + (scale / c) * (((n / n_exc) * risk) ** (-c) - 1) if abs(c) > 1e-6 \
+        level = (
+            t0 + (scale / c) * (((n / n_exc) * risk) ** (-c) - 1)
+            if abs(c) > 1e-6
             else t0 - scale * np.log((n / n_exc) * risk)
+        )
         return float(level) if np.isfinite(level) else t0
     except Exception:
         return t0
@@ -57,8 +62,13 @@ def calibrate(ref: np.ndarray, scores: np.ndarray) -> tuple[np.ndarray, float, f
     return (np.asarray(scores, dtype=float) - mu) / sd, mu, sd
 
 
-def select_threshold(method: str, val_scores: np.ndarray, val_labels: np.ndarray | None = None,
-                     percentile: float = 95.0, fixed: float = 0.5) -> float:
+def select_threshold(
+    method: str,
+    val_scores: np.ndarray,
+    val_labels: np.ndarray | None = None,
+    percentile: float = 95.0,
+    fixed: float = 0.5,
+) -> float:
     """Dispatch. val_labels required only for best_f1; others use scores (normal val) only."""
     if method == "best-f1":
         assert val_labels is not None, "best-f1 needs val labels"

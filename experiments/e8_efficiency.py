@@ -1,5 +1,7 @@
 """E8: efficiency — params, train time (1 epoch), inference latency (windows/sec) on CPU."""
+
 from __future__ import annotations
+
 import sys
 import time
 from pathlib import Path
@@ -9,6 +11,7 @@ sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT))
 import numpy as np
 import torch
+
 from experiments.common import seed_cfg
 from tsad.models.encoders import make_encoder
 from tsad.models.prototype import PrototypeBank
@@ -40,8 +43,14 @@ def run(cfg, seeds, outdir, smoke: bool = True) -> list[dict]:
         t1 = time.perf_counter()
         bank.score(Zr)
         dt_inf = time.perf_counter() - t1
-        rows.append({"model": enc, "params": _params(m), "device": dev,
-                     "score_windows_per_sec": round(256 / dt_inf, 1),
-                     "kmeans_fit_s": round(dt_fit, 3),
-                     "batch64_forward_ms": round(dt * 1000, 1)})
+        rows.append(
+            {
+                "model": enc,
+                "params": _params(m),
+                "device": dev,
+                "score_windows_per_sec": round(256 / dt_inf, 1),
+                "kmeans_fit_s": round(dt_fit, 3),
+                "batch64_forward_ms": round(dt * 1000, 1),
+            }
+        )
     return rows

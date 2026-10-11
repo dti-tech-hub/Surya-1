@@ -1,12 +1,14 @@
 """Phase-1 tests: windows, leakage, splits, augmentation, synthetic masks, missing-data grace."""
+
 import numpy as np
 import pytest
-from tsad.data.windows import sliding_windows, window_label
-from tsad.data.splits import split_series, assert_window_disjointness
-from tsad.data.normalize import PerDomainNormalizer
-from tsad.data.augment import AugmentPipeline, AUGMENTS
-from tsad.data.synthetic import SyntheticDataset
+
+from tsad.data.augment import AUGMENTS, AugmentPipeline
 from tsad.data.base import DatasetMissingError
+from tsad.data.normalize import PerDomainNormalizer
+from tsad.data.splits import assert_window_disjointness, split_series
+from tsad.data.synthetic import SyntheticDataset
+from tsad.data.windows import sliding_windows, window_label
 
 
 def test_window_correctness():
@@ -73,8 +75,23 @@ def test_synthetic_masks_and_types():
         assert (~lab[m.any(axis=1)]).sum() == 0
 
 
+def test_registry_protocols():
+    from tsad.data.registry import DomainRegistry
+
+    ds = SyntheticDataset(n_domains=3, length=300, n_channels=2, seed=0).load()
+    reg = DomainRegistry(ds)
+    assert reg.ids() == ["domain_0", "domain_1", "domain_2"]
+    src, tgt = reg.source_target(["domain_1", "domain_2"], "domain_0")
+    assert sorted(src) == ["domain_1", "domain_2"] and list(tgt) == ["domain_0"]
+    lod = reg.lodo()
+    assert len(lod) == 3 and all(len(s) == 2 and len(t) == 1 for s, t in lod)
+    ms, mt = reg.multi_source("domain_0")  # regression: undefined-name bug lived here
+    assert sorted(ms) == ["domain_1", "domain_2"] and list(mt) == ["domain_0"]
+    assert len(reg.summary()) == 3
+
+
 def test_missing_datasets_skip_gracefully():
-    from tsad.data.datasets import SWaTDataset, YahooDataset, SMDDataset
+    from tsad.data.datasets import SMDDataset, SWaTDataset, YahooDataset
 
     for cls in (SWaTDataset, YahooDataset):
         with pytest.raises(DatasetMissingError, match="access-required|Missing"):

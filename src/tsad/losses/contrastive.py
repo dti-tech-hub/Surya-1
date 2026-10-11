@@ -1,5 +1,7 @@
 """Contrastive + auxiliary losses (config-weighted)."""
+
 from __future__ import annotations
+
 import torch
 import torch.nn.functional as F
 
@@ -24,17 +26,19 @@ def _instance_temporal(f1: torch.Tensor, f2: torch.Tensor, tau: float = 0.1) -> 
     # instance
     li = info_nce(f1.mean(1), f2.mean(1), tau)
     # temporal: for each series, T timesteps contrasted across views
-    B, T, _ = f1.shape
-    lt = 0.0
+    B, _T, _ = f1.shape
+    lt: torch.Tensor = torch.zeros(())
     for b in range(B):
         lt = lt + info_nce(f1[b], f2[b], tau)
     return li + lt / max(1, B)
 
 
-def ts2vec_loss(f1: torch.Tensor, f2: torch.Tensor, tau: float = 0.1,
-                max_scales: int = 2) -> torch.Tensor:
+def ts2vec_loss(
+    f1: torch.Tensor, f2: torch.Tensor, tau: float = 0.1, max_scales: int = 2
+) -> torch.Tensor:
     """Hierarchical (TS2Vec-style, simplified): contrast at progressively pooled time scales."""
-    loss, w, tot = 0.0, 1.0, 0.0
+    loss: torch.Tensor = torch.zeros(())
+    w, tot = 1.0, 0.0
     a, b = f1, f2
     for _ in range(max_scales):
         loss = loss + w * _instance_temporal(a, b, tau)

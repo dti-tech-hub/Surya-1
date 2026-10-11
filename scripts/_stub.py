@@ -1,13 +1,15 @@
 """Stub entry points for later phases (Phase 0: parse config, no heavy deps)."""
+
 from __future__ import annotations
+
 import argparse
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from tsad.config import load_config
-from tsad.seed import set_seed
 from tsad.logging_utils import get_logger
+from tsad.seed import set_seed
 
 
 def _run(name: str):

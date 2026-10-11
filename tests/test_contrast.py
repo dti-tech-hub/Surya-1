@@ -1,10 +1,12 @@
 """Phase-3 tests: encoder shapes/attn, loss sanity + descent, prototype separation, mapping."""
+
 import numpy as np
 import torch
+
+from tsad.losses.contrastive import info_nce, masked_mse, ts2vec_loss
 from tsad.models.encoders import make_encoder
-from tsad.losses.contrastive import info_nce, ts2vec_loss, masked_mse
 from tsad.models.prototype import PrototypeBank
-from tsad.models.scoring import map_to_timestamps, smooth, hybrid
+from tsad.models.scoring import hybrid, map_to_timestamps, smooth
 
 
 def test_encoder_shapes_and_attn():

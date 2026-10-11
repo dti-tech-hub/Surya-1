@@ -3,10 +3,13 @@
 dist_k = MMD (default) / proxy A-distance / embedding-stats distance between source k and target.
 Dissimilar sources get ~0 weight (negative-transfer prevention). Learnable temperature tau.
 """
+
 from __future__ import annotations
+
 import numpy as np
 import torch
-import torch.nn as nn
+from torch import nn
+
 from tsad.losses.mmd import mmd2
 
 

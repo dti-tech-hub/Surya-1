@@ -3,16 +3,20 @@
 Domain shift knobs per domain: mean, variance scale, frequency, phase, amplitude.
 Anomaly types: point spike, contextual, collective/shape, frequency change, level shift, trend.
 """
+
 from __future__ import annotations
+
 import numpy as np
+
 from tsad.data.base import BaseTSADDataset, DomainData
 from tsad.data.splits import split_series
-
 
 ANOMALY_TYPES = ("point", "contextual", "collective", "frequency", "level_shift", "trend")
 
 
-def _base_series(rng: np.random.Generator, T: int, C: int, freq: float, phase: float, amp: float) -> np.ndarray:
+def _base_series(
+    rng: np.random.Generator, T: int, C: int, freq: float, phase: float, amp: float
+) -> np.ndarray:
     t = np.arange(T)[:, None]
     ch = np.arange(C)[None, :]
     x = amp * np.sin(2 * np.pi * freq * t / 64.0 + phase + 0.3 * ch)
@@ -66,8 +70,11 @@ def generate_domain(
     amp: float = 1.0,
     anomaly_ratio: float = 0.05,
     waveform: str = "sine",  # sine | noise (noise = structureless harmful domain for E4/Phase-4)
-) -> tuple[tuple[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray],
-           tuple[np.ndarray, np.ndarray, np.ndarray]]:
+) -> tuple[
+    tuple[np.ndarray, np.ndarray],
+    tuple[np.ndarray, np.ndarray],
+    tuple[np.ndarray, np.ndarray, np.ndarray],
+]:
     rng = np.random.default_rng(seed)
     if waveform == "noise":
         x = rng.standard_normal((T, C))  # no shared temporal structure
@@ -87,15 +94,24 @@ def generate_domain(
 class SyntheticDataset(BaseTSADDataset):
     name = "synthetic"
 
-    def __init__(self, n_domains: int = 3, length: int = 2000, n_channels: int = 4,
-                 anomaly_ratio: float = 0.05, seed: int = 0, harmful_last: bool = False,
-                 harmful_kind: str = "shift"):  # shift | noise (noise = structureless, truly harmful)
+    def __init__(
+        self,
+        n_domains: int = 3,
+        length: int = 2000,
+        n_channels: int = 4,
+        anomaly_ratio: float = 0.05,
+        seed: int = 0,
+        harmful_last: bool = False,
+        harmful_kind: str = "shift",
+    ):  # shift | noise (noise = structureless, truly harmful)
         self.n_domains = n_domains
         self.length = length
         self.n_channels = n_channels
         self.anomaly_ratio = anomaly_ratio
         self.seed = seed
-        self.harmful_last = harmful_last  # last domain = unrelated distribution (for E4 neg-transfer)
+        self.harmful_last = (
+            harmful_last  # last domain = unrelated distribution (for E4 neg-transfer)
+        )
         self.harmful_kind = harmful_kind
 
     def load(self) -> dict[str, DomainData]:
@@ -103,17 +119,33 @@ class SyntheticDataset(BaseTSADDataset):
         for k in range(self.n_domains):
             if self.harmful_last and k == self.n_domains - 1:
                 if self.harmful_kind == "noise":
-                    kw: dict = dict(waveform="noise")  # no shared structure post-normalization
+                    kw: dict = {"waveform": "noise"}  # no shared structure post-normalization
                 else:
-                    kw = dict(mean=8.0, var_scale=3.0, freq=4.0, phase=2.5, amp=3.0)
+                    kw = {"mean": 8.0, "var_scale": 3.0, "freq": 4.0, "phase": 2.5, "amp": 3.0}
             else:
-                kw = dict(mean=0.5 * k, var_scale=1.0 + 0.3 * k, freq=1.0 + 0.25 * k,
-                          phase=0.4 * k, amp=1.0 + 0.2 * k)
+                kw = {
+                    "mean": 0.5 * k,
+                    "var_scale": 1.0 + 0.3 * k,
+                    "freq": 1.0 + 0.25 * k,
+                    "phase": 0.4 * k,
+                    "amp": 1.0 + 0.2 * k,
+                }
             (tr_x, tr_y), (va_x, va_y), (te_x, te_y, te_m) = generate_domain(
-                self.seed + 100 * k, self.length, self.n_channels,
-                anomaly_ratio=self.anomaly_ratio, **kw)
+                self.seed + 100 * k,
+                self.length,
+                self.n_channels,
+                anomaly_ratio=self.anomaly_ratio,
+                **kw,
+            )
             out[f"domain_{k}"] = DomainData(
-                domain_id=f"domain_{k}", train_series=tr_x, val_series=va_x, test_series=te_x,
-                train_labels=tr_y, val_labels=va_y, test_labels=te_y,
-                test_channel_mask=te_m, meta={"shift": kw})
+                domain_id=f"domain_{k}",
+                train_series=tr_x,
+                val_series=va_x,
+                test_series=te_x,
+                train_labels=tr_y,
+                val_labels=va_y,
+                test_labels=te_y,
+                test_channel_mask=te_m,
+                meta={"shift": kw},
+            )
         return out

@@ -3,20 +3,24 @@
 L = w_nce * InfoNCE + w_ts2vec * hierarchical + w_mask * masked-recon.
 Validation monitors contrastive loss on val windows (unlabeled proxy — no labels).
 """
+
 from __future__ import annotations
+
+import lightning as L
 import numpy as np
 import torch
-import torch.nn as nn
-from torch.utils.data import Dataset, DataLoader
-import lightning as L
-from tsad.models.encoders import make_encoder
-from tsad.losses.contrastive import info_nce, ts2vec_loss, masked_mse
+from torch import nn
+from torch.utils.data import DataLoader, Dataset
+
 from tsad.data.augment import AugmentPipeline
+from tsad.losses.contrastive import info_nce, masked_mse, ts2vec_loss
+from tsad.models.encoders import make_encoder
 
 
 class WindowDataset(Dataset):
-    def __init__(self, windows: np.ndarray, pipe: AugmentPipeline, mask_ratio: float = 0.15,
-                 seed: int = 0):
+    def __init__(
+        self, windows: np.ndarray, pipe: AugmentPipeline, mask_ratio: float = 0.15, seed: int = 0
+    ):
         self.X = windows.astype(np.float32)
         self.pipe = pipe
         self.mask_ratio = mask_ratio
@@ -35,9 +39,19 @@ class WindowDataset(Dataset):
 
 
 class ContrastModule(L.LightningModule):
-    def __init__(self, n_ch: int, encoder: str = "tcn", d: int = 32, p: int = 32,
-                 tau: float = 0.1, w_nce: float = 1.0, w_ts2vec: float = 0.0,
-                 w_mask: float = 0.0, lr: float = 1e-3, hid: int = 32):
+    def __init__(
+        self,
+        n_ch: int,
+        encoder: str = "tcn",
+        d: int = 32,
+        p: int = 32,
+        tau: float = 0.1,
+        w_nce: float = 1.0,
+        w_ts2vec: float = 0.0,
+        w_mask: float = 0.0,
+        lr: float = 1e-3,
+        hid: int = 32,
+    ):
         super().__init__()
         self.save_hyperparameters()
         self.enc = make_encoder(encoder, n_ch, d, hidden=hid)
@@ -80,7 +94,7 @@ class ContrastModule(L.LightningModule):
         dev = next(self.parameters()).device
         errs = []
         for i in range(0, len(X), batch):
-            xb = torch.from_numpy(X[i:i + batch].astype(np.float32)).to(dev)
+            xb = torch.from_numpy(X[i : i + batch].astype(np.float32)).to(dev)
             pr = self.dec(self.enc(xb)["tokens"])
             errs.append(((pr - xb) ** 2).mean(-1).cpu().numpy())
         return np.concatenate(errs).astype(np.float64)
@@ -89,21 +103,27 @@ class ContrastModule(L.LightningModule):
     def embed(self, X: np.ndarray, batch: int = 256) -> tuple[np.ndarray, np.ndarray | None]:
         self.eval()
         dev = next(self.parameters()).device
-        reps, attns = [], []
+        reps: list[np.ndarray] = []
+        attns: list[np.ndarray | None] = []
         for i in range(0, len(X), batch):
-            xb = torch.from_numpy(X[i:i + batch].astype(np.float32)).to(dev)
+            xb = torch.from_numpy(X[i : i + batch].astype(np.float32)).to(dev)
             o = self.enc(xb)
             reps.append(o["rep"].cpu().numpy())
             attns.append(None if o["attn"] is None else o["attn"].cpu().numpy())
         Z = np.concatenate(reps)
-        A = np.concatenate(attns) if attns[0] is not None else None
+        A: np.ndarray | None = (
+            np.concatenate([a for a in attns if a is not None]) if attns[0] is not None else None
+        )
         return Z, A
 
 
-def make_loaders(tr_w: np.ndarray, va_w: np.ndarray, augments: list[str], batch: int,
-                 seed: int = 0) -> tuple[DataLoader, DataLoader]:
+def make_loaders(
+    tr_w: np.ndarray, va_w: np.ndarray, augments: list[str], batch: int, seed: int = 0
+) -> tuple[DataLoader, DataLoader]:
     pipe = AugmentPipeline(augments or ["jitter"], seed=seed)
-    return (DataLoader(WindowDataset(tr_w, pipe, seed=seed), batch_size=batch, shuffle=True,
-                       num_workers=0),
-            DataLoader(WindowDataset(va_w, pipe, seed=seed + 1), batch_size=batch,
-                       num_workers=0))
+    return (
+        DataLoader(
+            WindowDataset(tr_w, pipe, seed=seed), batch_size=batch, shuffle=True, num_workers=0
+        ),
+        DataLoader(WindowDataset(va_w, pipe, seed=seed + 1), batch_size=batch, num_workers=0),
+    )

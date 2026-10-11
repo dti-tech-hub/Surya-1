@@ -3,8 +3,11 @@
 Per channel: fit ARIMA(2,0,0)-style model on normal train, score = |test - forecast|.
 Falls back to a numpy AR(2) fit when statsmodels is missing — logged, not silent.
 """
+
 from __future__ import annotations
+
 import numpy as np
+
 from tsad.baselines.base import Baseline
 
 
@@ -19,7 +22,7 @@ def _ar_forecast(train_c: np.ndarray, steps: int, p: int = 2) -> np.ndarray:
         x = np.nan_to_num(train_c).astype(float)
         if len(x) <= p:
             return np.full(steps, x.mean())
-        Y, X = x[p:], np.stack([x[p - i - 1:len(x) - i - 1] for i in range(p)], axis=1)
+        Y, X = x[p:], np.stack([x[p - i - 1 : len(x) - i - 1] for i in range(p)], axis=1)
         coef, *_ = np.linalg.lstsq(X, Y, rcond=None)
         hist = list(x[-p:])
         out = []

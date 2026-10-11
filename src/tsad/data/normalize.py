@@ -1,5 +1,7 @@
 """Per-domain normalization fit on TRAIN ONLY. Handles NaN + constant channels."""
+
 from __future__ import annotations
+
 import numpy as np
 
 
@@ -26,7 +28,9 @@ class PerDomainNormalizer:
 
     def transform(self, x: np.ndarray) -> np.ndarray:
         assert self.mean_ is not None, "call fit() on train first — no leakage allowed"
-        assert x.shape[1] == self.n_channels_, f"channel mismatch {x.shape[1]} vs {self.n_channels_}"
+        assert (
+            x.shape[1] == self.n_channels_
+        ), f"channel mismatch {x.shape[1]} vs {self.n_channels_}"
         xn = (np.nan_to_num(x, nan=0.0) - self.mean_) / self.std_
         return np.nan_to_num(xn, nan=0.0, posinf=5.0, neginf=-5.0).astype(np.float32)
 

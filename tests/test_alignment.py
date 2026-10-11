@@ -1,15 +1,17 @@
 """Phase-4 tests: gate range/sparsity, weights simplex, GRL sign, MMD/CORAL/DANN, preserve, monitor, TTA."""
+
 import numpy as np
 import torch
-from tsad.losses.mmd import mmd2
-from tsad.losses.coral import coral
-from tsad.losses.dann import grad_reverse, dann_lambda, DomainDiscriminator
-from tsad.alignment.gate import FeatureGate
-from tsad.alignment.domain_weights import DomainWeighter
-from tsad.alignment.preserve import compactness, pseudo_margin, no_collapse
+
 from tsad.alignment.adaptive import AdaptiveAligner
+from tsad.alignment.domain_weights import DomainWeighter
+from tsad.alignment.gate import FeatureGate
 from tsad.alignment.monitor import NegTransferMonitor
+from tsad.alignment.preserve import compactness, no_collapse, pseudo_margin
 from tsad.alignment.tta import adabn_adapt
+from tsad.losses.coral import coral
+from tsad.losses.dann import DomainDiscriminator, dann_lambda, grad_reverse
+from tsad.losses.mmd import mmd2
 from tsad.models.encoders import make_encoder
 
 
@@ -88,8 +90,7 @@ def test_adaptive_forward_and_monitor_rollback():
 def test_tta_updates_bn_stats():
     enc = make_encoder("tcn", 2, d=4)
     enc.train()
-    before = [b.running_mean.clone() for b in enc.modules()
-              if isinstance(b, torch.nn.BatchNorm1d)]
+    before = [b.running_mean.clone() for b in enc.modules() if isinstance(b, torch.nn.BatchNorm1d)]
     X = (np.random.default_rng(0).normal(5, 1, (64, 16, 2))).astype(np.float32)  # shifted target
     adabn_adapt(enc, X)
     after = [b.running_mean for b in enc.modules() if isinstance(b, torch.nn.BatchNorm1d)]

@@ -1,5 +1,7 @@
 """E2: cross-domain transfer — source->target pairs + target-only ref + transfer gain."""
+
 from __future__ import annotations
+
 import sys
 from pathlib import Path
 
@@ -24,7 +26,13 @@ def run(cfg, seeds, outdir, smoke: bool = True) -> list[dict]:
         for src, tgt in pairs:
             r = run_single_domain(c, src, tgt)
             tr = transfer_report(refs[tgt], r["strict_f1"], refs[tgt])
-            rows.append({"seed": s, "pair": f"{src}->{tgt}", **r,
-                         "t_gain_vs_targetonly": round(tr["transfer_gain"], 4),
-                         "t_neg": tr["negative_transfer"]})
+            rows.append(
+                {
+                    "seed": s,
+                    "pair": f"{src}->{tgt}",
+                    **r,
+                    "t_gain_vs_targetonly": round(tr["transfer_gain"], 4),
+                    "t_neg": tr["negative_transfer"],
+                }
+            )
     return rows

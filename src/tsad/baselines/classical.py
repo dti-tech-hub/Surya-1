@@ -1,9 +1,12 @@
 """Classical baselines: z-score, IsolationForest, One-Class SVM, PCA reconstruction."""
+
 from __future__ import annotations
+
 import numpy as np
+from sklearn.decomposition import PCA
 from sklearn.ensemble import IsolationForest
 from sklearn.svm import OneClassSVM
-from sklearn.decomposition import PCA
+
 from tsad.baselines.base import Baseline
 
 
@@ -55,7 +58,7 @@ class OCSVMBaseline(Baseline):
 class PCABaseline(Baseline):
     name = "pca"
 
-    def __init__(self, n_components: int | float = 0.95):
+    def __init__(self, n_components: float = 0.95):
         self.n_components = n_components
 
     def fit(self, train: np.ndarray) -> PCABaseline:

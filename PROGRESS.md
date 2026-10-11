@@ -9,10 +9,18 @@
 - [x] Phase 5 — explainability O4 (2026-10-11)
 - [x] Phase 6 — experiments E1–E8 (2026-10-11)
 - [x] Phase 7 — API + dashboard (2026-10-11)
-- [ ] Phase 8 — reproducibility/docs
+- [x] Phase 8 — reproducibility/docs (2026-10-11)
 - [ ] Phase 9 — Colab/Kaggle
 - [ ] Phase 10 — report generator
 - [ ] Phase 11 — final audit
+
+## Phase 8 log
+- 52/52 pass; ruff + black + mypy(62 files) clean; coverage 74% (gaps documented: file-needing loaders,
+  uninstalled captum, ARIMA-fallback).
+- Lint caught a REAL bug (registry.multi_source undefined name) -> fixed + regression test added.
+- README (install/data/reproduce/results/limitations), DESIGN (mermaid+math+decisions+threats), VIVA_QA (40),
+  MODEL_CARD, TRACKING, CI workflow (lint+typecheck+pytest+bundle+API on CPU).
+- pre-commit config present (ruff+black); run `pre-commit install` on dev machines.
 
 ## Phase 7 log
 - 45/45 tests pass (5 API: health/models/detect-json+csv/shape-validation/explain-schema/domains/adapt).

@@ -1,7 +1,10 @@
 """Shared download helpers: checksum verify + graceful missing-file errors."""
+
 from __future__ import annotations
+
 import hashlib
 from pathlib import Path
+
 from tsad.data.base import DatasetMissingError
 
 

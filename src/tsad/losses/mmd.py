@@ -1,5 +1,7 @@
 """Multi-kernel MMD (biased V-statistic). X, Y: (n, d), (m, d)."""
+
 from __future__ import annotations
+
 import torch
 
 
@@ -20,13 +22,12 @@ def _median_bandwidth(X: torch.Tensor, Y: torch.Tensor) -> float:
         return max(1e-3, med)
 
 
-def mmd2(X: torch.Tensor, Y: torch.Tensor,
-         sigmas: tuple[float, ...] | None = None) -> torch.Tensor:
+def mmd2(X: torch.Tensor, Y: torch.Tensor, sigmas: tuple[float, ...] | None = None) -> torch.Tensor:
     """Squared multi-kernel MMD. sigmas=None -> median heuristic (0.5x, 1x, 2x)."""
     if sigmas is None:
         m = _median_bandwidth(X, Y)
         sigmas = (0.5 * m, m, 2.0 * m)
-    Kxx = sum(rbf_kernel(X, X, s) for s in sigmas) / len(sigmas)
-    Kyy = sum(rbf_kernel(Y, Y, s) for s in sigmas) / len(sigmas)
-    Kxy = sum(rbf_kernel(X, Y, s) for s in sigmas) / len(sigmas)
+    Kxx = torch.stack([rbf_kernel(X, X, s) for s in sigmas]).mean(0)
+    Kyy = torch.stack([rbf_kernel(Y, Y, s) for s in sigmas]).mean(0)
+    Kxy = torch.stack([rbf_kernel(X, Y, s) for s in sigmas]).mean(0)
     return Kxx.mean() + Kyy.mean() - 2 * Kxy.mean()

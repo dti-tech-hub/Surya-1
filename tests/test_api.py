@@ -1,10 +1,11 @@
 """Phase-7 API tests (FastAPI TestClient + httpx semantics). Needs models/bundle/synthetic_tcn."""
+
 import os
 import shutil
-import numpy as np
-from fastapi.testclient import TestClient
 
+import numpy as np
 import pytest
+from fastapi.testclient import TestClient
 
 from tsad.api.app import app
 
@@ -62,7 +63,14 @@ def test_explain_schema():
     r = client.post("/explain", json={"series": _series(), "model": "synthetic_tcn"})
     assert r.status_code == 200, r.text
     parts = r.json()["parts"]
-    assert {"prototype", "attention", "attribution", "counterfactual", "cross_domain", "summary"} <= set(parts)
+    assert {
+        "prototype",
+        "attention",
+        "attribution",
+        "counterfactual",
+        "cross_domain",
+        "summary",
+    } <= set(parts)
     assert isinstance(parts["summary"], str) and len(parts["summary"]) > 20
 
 
@@ -73,8 +81,10 @@ def test_domains_and_adapt():
     x = np.array(_series(T=400))
     buf = io.StringIO()
     np.savetxt(buf, x, delimiter=",")
-    r = client.post("/adapt?model=synthetic_tcn&new_name=test_adapted",
-                    files={"file": ("s.csv", buf.getvalue(), "text/csv")})
+    r = client.post(
+        "/adapt?model=synthetic_tcn&new_name=test_adapted",
+        files={"file": ("s.csv", buf.getvalue(), "text/csv")},
+    )
     assert r.status_code == 200, r.text
     assert "test_adapted" in client.get("/models").json()["models"]
     r2 = client.post("/detect", json={"series": _series(), "model": "test_adapted"})

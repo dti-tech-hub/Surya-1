@@ -1,10 +1,13 @@
 """Pseudo-anomaly injection for optional anomaly-aware self-supervision (off by default)."""
+
 from __future__ import annotations
+
 import numpy as np
 
 
-def inject_pseudo(x: np.ndarray, kind: str = "spike", magnitude: float = 3.0,
-                  seed: int | None = None) -> tuple[np.ndarray, np.ndarray]:
+def inject_pseudo(
+    x: np.ndarray, kind: str = "spike", magnitude: float = 3.0, seed: int | None = None
+) -> tuple[np.ndarray, np.ndarray]:
     """x: (T, C) normal window -> (x_aug (T, C), mask (T, C))."""
     rng = np.random.default_rng(seed)
     y, m = x.astype(np.float32).copy(), np.zeros_like(x, dtype=np.int64)

@@ -1,0 +1,20 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  cpu-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11"}
+      - name: Install (smoke + runtime for API/eff tests)
+        run: |
+          pip install -r requirements-smoke.txt
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install lightning scikit-learn scipy matplotlib fastapi uvicorn httpx pydantic streamlit lime shap ruff black mypy pytest-cov
+      - run: python -m ruff check src tests scripts experiments dashboard
+      - run: python -m black --check src tests scripts experiments dashboard
+      - run: python -m mypy src/tsad
+      - run: python -m pytest -q
+      - run: python scripts/build_bundle.py --config configs/smoke.yaml --name synthetic_tcn
+      - run: python -m pytest tests/test_api.py -q

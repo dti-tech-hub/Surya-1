@@ -1,5 +1,9 @@
 """Time-series augmentations. Each fn: (T, C) float32 -> (T, C) float32. Pipeline is config-driven."""
+
 from __future__ import annotations
+
+from collections.abc import Callable
+
 import numpy as np
 
 
@@ -16,7 +20,9 @@ def scaling(x: np.ndarray, lo: float = 0.9, hi: float = 1.1, seed: int | None = 
     return (x * r).astype(np.float32)
 
 
-def magnitude_warp(x: np.ndarray, knots: int = 4, sigma: float = 0.2, seed: int | None = None) -> np.ndarray:
+def magnitude_warp(
+    x: np.ndarray, knots: int = 4, sigma: float = 0.2, seed: int | None = None
+) -> np.ndarray:
     rng = _rng(seed)
     T, C = x.shape
     warp = np.ones((T, C), dtype=np.float32)
@@ -27,7 +33,9 @@ def magnitude_warp(x: np.ndarray, knots: int = 4, sigma: float = 0.2, seed: int 
     return (x * warp).astype(np.float32)
 
 
-def time_warp(x: np.ndarray, knots: int = 4, sigma: float = 0.1, seed: int | None = None) -> np.ndarray:
+def time_warp(
+    x: np.ndarray, knots: int = 4, sigma: float = 0.1, seed: int | None = None
+) -> np.ndarray:
     rng = _rng(seed)
     T, C = x.shape
     tt = np.arange(T, dtype=float)
@@ -41,7 +49,7 @@ def window_crop(x: np.ndarray, crop_ratio: float = 0.9, seed: int | None = None)
     T = len(x)
     L = max(1, int(T * crop_ratio))
     s = int(rng.integers(0, T - L + 1)) if T > L else 0
-    seg = x[s:s + L]
+    seg = x[s : s + L]
     idx = np.linspace(0, L - 1, T).astype(int)  # resize back to T
     return seg[idx].astype(np.float32)
 
@@ -59,7 +67,7 @@ def permutation(x: np.ndarray, n_segments: int = 4, seed: int | None = None) -> 
     T = len(x)
     edges = sorted(rng.choice(T, n_segments - 1, replace=False)) if T > n_segments else []
     bounds = [0, *map(int, edges), T]
-    segs = [x[bounds[i]:bounds[i + 1]] for i in range(n_segments)]
+    segs = [x[bounds[i] : bounds[i + 1]] for i in range(n_segments)]
     rng.shuffle(segs)
     return np.concatenate(segs, axis=0).astype(np.float32)
 
@@ -67,13 +75,18 @@ def permutation(x: np.ndarray, n_segments: int = 4, seed: int | None = None) -> 
 def freq_perturb(x: np.ndarray, sigma: float = 0.05, seed: int | None = None) -> np.ndarray:
     rng = _rng(seed)
     F = np.fft.rfft(x, axis=0)
-    F = F + sigma * (rng.standard_normal(F.shape) + 1j * rng.standard_normal(F.shape)) * np.abs(F).mean()
+    F = (
+        F
+        + sigma
+        * (rng.standard_normal(F.shape) + 1j * rng.standard_normal(F.shape))
+        * np.abs(F).mean()
+    )
     return np.fft.irfft(F, n=len(x), axis=0).astype(np.float32)
 
 
 def channel_dropout(x: np.ndarray, p: float = 0.2, seed: int | None = None) -> np.ndarray:
     rng = _rng(seed)
-    drop = rng.random(x.shape[1]) < p
+    drop = np.asarray(rng.random(x.shape[1]) < p)
     if drop.all():
         drop[int(rng.integers(0, x.shape[1]))] = False  # keep at least one
     y = x.copy()
@@ -81,9 +94,17 @@ def channel_dropout(x: np.ndarray, p: float = 0.2, seed: int | None = None) -> n
     return y.astype(np.float32)
 
 
-AUGMENTS = {"jitter": jitter, "scaling": scaling, "magnitude_warp": magnitude_warp,
-            "time_warp": time_warp, "window_crop": window_crop, "masking": masking,
-            "permutation": permutation, "freq_perturb": freq_perturb, "channel_dropout": channel_dropout}
+AUGMENTS: dict[str, Callable[..., np.ndarray]] = {
+    "jitter": jitter,
+    "scaling": scaling,
+    "magnitude_warp": magnitude_warp,
+    "time_warp": time_warp,
+    "window_crop": window_crop,
+    "masking": masking,
+    "permutation": permutation,
+    "freq_perturb": freq_perturb,
+    "channel_dropout": channel_dropout,
+}
 
 
 class AugmentPipeline:

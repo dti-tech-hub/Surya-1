@@ -1,8 +1,11 @@
 """Encoders: TCN / Transformer (attn exposed) / ResNet1D. All: (B, T, C) -> rep (B, d)."""
+
 from __future__ import annotations
+
 import math
+
 import torch
-import torch.nn as nn
+from torch import nn
 
 
 class TCNBlock(nn.Module):
@@ -22,7 +25,7 @@ class TCNEncoder(nn.Module):
     def __init__(self, n_ch: int, d: int = 32, hidden: int = 32, levels: int = 3):
         super().__init__()
         self.inp = nn.Conv1d(n_ch, hidden, 1)
-        self.blocks = nn.Sequential(*[TCNBlock(hidden, 2 ** i) for i in range(levels)])
+        self.blocks = nn.Sequential(*[TCNBlock(hidden, 2**i) for i in range(levels)])
         self.avg = nn.AdaptiveAvgPool1d(1)
         self.mx = nn.AdaptiveMaxPool1d(1)
         # mean+max concat: mean captures shape, max preserves spike-type deviations
@@ -70,8 +73,9 @@ class TransformerEncoder(nn.Module):
         super().__init__()
         self.inp = nn.Linear(n_ch, hidden)
         self.pos = PosEncoding(hidden)
-        layer = nn.TransformerEncoderLayer(hidden, heads, dim_feedforward=4 * hidden,
-                                           batch_first=True)
+        layer = nn.TransformerEncoderLayer(
+            hidden, heads, dim_feedforward=4 * hidden, batch_first=True
+        )
         self.tr = nn.TransformerEncoder(layer, num_layers=layers)
         self.pool = AttnPool(hidden)
         self.fc = nn.Linear(hidden, d)

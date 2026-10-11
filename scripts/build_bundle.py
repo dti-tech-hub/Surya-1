@@ -1,5 +1,7 @@
 """Bundle builder: train source-only contrastive on synthetic, save models/bundle/<name>."""
+
 from __future__ import annotations
+
 import argparse
 import sys
 from pathlib import Path
@@ -7,11 +9,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT))
-from tsad.config import load_config
-from tsad.seed import set_seed
+from experiments.common import ensure_defaults
 from scripts.train import prepare_and_train
 from tsad.api.registry import save_bundle
-from experiments.common import ensure_defaults
+from tsad.config import load_config
+from tsad.seed import set_seed
 
 
 def main() -> int:

@@ -1,5 +1,7 @@
 """Logging utility: single get_logger with console handler (no global state)."""
+
 from __future__ import annotations
+
 import logging
 import sys
 

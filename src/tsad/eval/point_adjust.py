@@ -1,5 +1,7 @@
 """Point-adjusted (PA) protocol. WARNING: PA inflates scores — always report strict alongside."""
+
 from __future__ import annotations
+
 import numpy as np
 
 

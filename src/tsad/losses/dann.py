@@ -1,8 +1,11 @@
 """DANN pieces: gradient reversal layer + domain discriminator + lambda schedule."""
+
 from __future__ import annotations
+
 import math
+
 import torch
-import torch.nn as nn
+from torch import nn
 
 
 class _GRL(torch.autograd.Function):

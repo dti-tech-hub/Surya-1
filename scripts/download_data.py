@@ -1,13 +1,26 @@
 """Per-dataset download stubs sharing notes (each prints its own instructions)."""
+
 from __future__ import annotations
+
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from tsad.data.datasets import SMDDataset, SMAPMSLDataset, UCRDataset, SWaTDataset, YahooDataset  # noqa
+from tsad.data.datasets import (
+    SMAPMSLDataset,
+    SMDDataset,
+    SWaTDataset,
+    UCRDataset,
+    YahooDataset,
+)
 
-MAP = {"smd": SMDDataset, "smap_msl": SMAPMSLDataset, "ucr": UCRDataset,
-       "swat": SWaTDataset, "yahoo": YahooDataset}
+MAP = {
+    "smd": SMDDataset,
+    "smap_msl": SMAPMSLDataset,
+    "ucr": UCRDataset,
+    "swat": SWaTDataset,
+    "yahoo": YahooDataset,
+}
 
 
 def main() -> int:

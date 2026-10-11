@@ -3,10 +3,18 @@
 Conventions: scores (T,) higher = more anomalous; labels (T,) binary.
 PA metrics are computed via point_adjust and ALWAYS flagged as inflated (see report.py).
 """
+
 from __future__ import annotations
+
 import numpy as np
-from sklearn.metrics import (precision_score, recall_score, f1_score, roc_auc_score,
-                             average_precision_score)
+from sklearn.metrics import (
+    average_precision_score,
+    f1_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+)
+
 from tsad.eval.point_adjust import point_adjust
 
 
@@ -32,11 +40,13 @@ def strict_metrics(y: np.ndarray, scores: np.ndarray, threshold: float) -> dict:
     """Point-wise (strict) metrics at threshold + threshold-free AUCs."""
     pred = (np.asarray(scores) >= threshold).astype(np.int64)
     m = prf_from_pred(np.asarray(y), pred)
-    m.update({
-        "auc_roc": _safe_auc(roc_auc_score, np.asarray(y), np.asarray(scores)),
-        "auc_pr": _safe_auc(average_precision_score, np.asarray(y), np.asarray(scores)),
-        "threshold": float(threshold),
-    })
+    m.update(
+        {
+            "auc_roc": _safe_auc(roc_auc_score, np.asarray(y), np.asarray(scores)),
+            "auc_pr": _safe_auc(average_precision_score, np.asarray(y), np.asarray(scores)),
+            "threshold": float(threshold),
+        }
+    )
     return m
 
 
@@ -44,8 +54,13 @@ def pa_metrics(y: np.ndarray, scores: np.ndarray, threshold: float) -> dict:
     """Point-adjusted metrics. INFLATED by design — never report without strict."""
     adj = point_adjust(np.asarray(scores), np.asarray(y), threshold)
     m = prf_from_pred(np.asarray(y), adj)
-    return {"pa_precision": m["precision"], "pa_recall": m["recall"], "pa_f1": m["f1"],
-            "threshold": float(threshold), "warning": "PA inflates scores; see strict_* too"}
+    return {
+        "pa_precision": m["precision"],
+        "pa_recall": m["recall"],
+        "pa_f1": m["f1"],
+        "threshold": float(threshold),
+        "warning": "PA inflates scores; see strict_* too",
+    }
 
 
 def _events(y: np.ndarray) -> list[tuple[int, int]]:
@@ -63,8 +78,7 @@ def _events(y: np.ndarray) -> list[tuple[int, int]]:
     return ev
 
 
-def event_wise_f1(y: np.ndarray, scores: np.ndarray, threshold: float,
-                  overlap: int = 1) -> dict:
+def event_wise_f1(y: np.ndarray, scores: np.ndarray, threshold: float, overlap: int = 1) -> dict:
     """Event-wise F1: each GT event = 1 unit; detected if >=overlap predicted points inside.
 
     pred_events counted from thresholded preds; precision over pred events, recall over GT events.
@@ -81,8 +95,7 @@ def event_wise_f1(y: np.ndarray, scores: np.ndarray, threshold: float,
     return {"event_precision": float(prec), "event_recall": float(rec), "event_f1": float(f1)}
 
 
-def range_based_f1(y: np.ndarray, scores: np.ndarray, threshold: float,
-                   alpha: float = 0.5) -> dict:
+def range_based_f1(y: np.ndarray, scores: np.ndarray, threshold: float, alpha: float = 0.5) -> dict:
     """Simplified Tatbul-style range F1: overlap reward * (1-existence) blended with existence.
 
     Full Tatbul weights positional bias; here: recall_R = mean over GT events of
@@ -98,7 +111,7 @@ def range_based_f1(y: np.ndarray, scores: np.ndarray, threshold: float,
         if not ev_list:
             return 0.0
         s = 0.0
-        for (a, b) in ev_list:
+        for a, b in ev_list:
             ov = float(other[a:b].sum()) / max(1, b - a)
             s += alpha * (1.0 if ov > 0 else 0.0) + (1 - alpha) * ov
         return s / len(ev_list)

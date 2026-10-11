@@ -1,16 +1,20 @@
 """Config system: OmegaConf+YAML with CLI overrides (dotlist key=value)."""
+
 from __future__ import annotations
+
 from pathlib import Path
-from typing import List, Optional
+
 from omegaconf import OmegaConf
 
 
-def load_config(config_path: str | Path, overrides: Optional[List[str]] = None):
+def load_config(config_path: str | Path, overrides: list[str] | None = None):
     """Load YAML config and apply CLI dotlist overrides.
 
     Example: load_config("configs/default.yaml", ["model.encoder=transformer", "seed=1"])
     """
-    cfg = OmegaConf.load(str(config_path))
+    from typing import Any
+
+    cfg: Any = OmegaConf.load(str(config_path))
     if overrides:
         cli = OmegaConf.from_dotlist(overrides)
         cfg = OmegaConf.merge(cfg, cli)

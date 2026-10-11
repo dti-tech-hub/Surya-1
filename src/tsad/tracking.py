@@ -2,7 +2,9 @@
 
 Secrets policy: never read keys from code — W&B key comes from env WANDB_API_KEY only.
 """
+
 from __future__ import annotations
+
 from typing import Any
 
 
@@ -40,6 +42,7 @@ class Tracker:
 
             mlflow.log_metrics(metrics, step=step)
         elif self.backend == "wandb":
+            assert self._run is not None, "call start() before log_metrics()"
             self._run.log(metrics, step=step)
 
     def stop(self):
@@ -62,7 +65,8 @@ def _flatten(config: Any) -> dict:
     try:
         from omegaconf import OmegaConf
 
-        return dict(OmegaConf.to_container(config, resolve=True))
+        c = OmegaConf.to_container(config, resolve=True)
+        return dict(c) if isinstance(c, dict) else {}
     except Exception:
         if isinstance(config, dict):
             return config

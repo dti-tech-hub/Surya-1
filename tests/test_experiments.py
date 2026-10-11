@@ -1,6 +1,6 @@
 """Phase-6 tests: table helpers, stats, aggregation, fast experiment runs."""
-import numpy as np
-from experiments.common import to_latex, paired_stats, mean_std_table, save_all
+
+from experiments.common import mean_std_table, paired_stats, save_all, to_latex
 
 
 def test_latex_and_save(tmp_path):
@@ -32,8 +32,8 @@ def test_e8_fast_and_dispatcher(tmp_path):
     ROOT = Path(__file__).resolve().parents[1]  # repo root (no hardcoded paths)
     sys.path.insert(0, str(ROOT / "src"))
     sys.path.insert(0, str(ROOT))
-    from tsad.config import load_config
     from experiments import e8_efficiency
+    from tsad.config import load_config
 
     cfg = load_config("configs/smoke.yaml")
     rows = e8_efficiency.run(cfg, [0], str(tmp_path), smoke=True)

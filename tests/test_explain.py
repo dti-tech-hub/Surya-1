@@ -1,11 +1,12 @@
 """Phase-5 tests: attribution shapes, fidelity on known-GT toy, localization, counterfactual."""
+
 import numpy as np
-import torch
-import torch.nn as nn
-from tsad.explain.attribution import saliency, integrated_gradients, smoothgrad, SoftProtoScore
+from torch import nn
+
 from tsad.explain import metrics as em
-from tsad.explain.counterfactual import counterfactual
+from tsad.explain.attribution import SoftProtoScore, integrated_gradients, saliency, smoothgrad
 from tsad.explain.base import topk_channels
+from tsad.explain.counterfactual import counterfactual
 from tsad.models.encoders import make_encoder
 
 

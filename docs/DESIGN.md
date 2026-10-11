@@ -1,23 +1,50 @@
-# DESIGN.md — living design doc (Phase 0)
+# DESIGN.md — architecture, math, decisions, limitations
 
 ## Architecture
-Config-driven TSAD pipeline: data → contrastive encoder → adaptive alignment → prototype scoring → explain.
 
 ```mermaid
 flowchart LR
-  D[Data pipeline] --> E[Encoder + contrast] --> A[Adaptive alignment] --> S[Prototype scoring] --> X[Explain layer]
+  D[Data: domains + windows + augments] --> E[Encoder + contrast O1]
+  E --> A[Adaptive alignment O2+O3]
+  A --> S[Prototype scoring]
+  S --> X[Explain layer O4]
+  S --> API[FastAPI + dashboard]
+  E --> API
 ```
 
 ## Tensor convention
-All series tensors are `(B, T, C)` = batch, time, channels. Windows sliced from `(T, C)` series.
+`(T, C)` series, `(B, T, C)` windows/batches, `(B, d)` reps, `(B, T)` attention.
 
-## Losses (to be fully specified in Phase 3/4)
-- `L = L_contrast + α_t·Σ_k w_k·L_align(k, gate) + β·L_preserve + γ·L_sparse`
+## Loss math
+- InfoNCE (NT-Xent, τ): `L = -log exp(sim(z1,z2⁺)/τ) / Σ exp(sim/τ)` over 2B views (`losses/contrastive.py`).
+- TS2Vec-hierarchical (simplified): instance + temporal contrast at pooled scales ×(1, ½, …).
+- Masked recon: MSE on masked steps only.
+- MMD² (multi-kernel RBF, **median-heuristic** σ ∈ {½m, m, 2m}): `E[k(x,x)] + E[k(y,y)] − 2E[k(x,y)]`.
+- CORAL: `‖Cov_s − Cov_t‖_F²/d² + ‖μ_s − μ_t‖²`.
+- DANN: BCE(domain-disc(GRL_λ(z))), λ = 2/(1+e^(−10p)) − 1 (Ganin).
+- Gate: g = σ(logits) (or hard-concrete); reg = mean(g) + 0.1·H(g).
+- Weights: w = softmax(−d/mean(d)/τ), d = MMD/stats/proxy-A, τ = 1 (scale-free).
+- Preserve: compactness E‖z−c‖² + hinge margin (pseudo-anomalies) + variance-floor no-collapse.
+- Combined: `L = Lc + α_t·Σ_k w_k·L_align(k, gate) + β·L_preserve + γ·L_sparse`, α warm-up × monitor factor.
 
-## Threats to validity (preview)
-- Point-adjusted metrics inflate scores → always report strict + PA side by side.
-- Thresholds must never use test labels (val-only).
-- Normalization stats fit on train only.
+## Why each choice (alternative rejected)
+- TCN default (fast CPU) over Transformer-only; max+mean pooling after proving mean-only dilution.
+- Median-heuristic MMD after fixed-σ saturation diagnosis; input-space epoch weights after batch-rep failure.
+- Noise-harmful domain after shift-harmful was erased by per-domain norm.
+- Val-only calibration + guard band after smearing diagnosis; best-F1-on-val for transfer comparisons.
+- Native attributors (zero-dep) + lazy captum/SHAP/LIME; Streamlit over Dash; OmegaConf over Hydra.
+
+## Known limitations
+1. Point-spike dilution (partly mitigated); 2. conservative unsupervised operating point; 3. seed-dependent
+   neg-transfer on tiny data (needs 5-seed full runs); 4. PA reported only beside strict; 5. VUS/affiliation
+   deferred; simplified Tatbul; 6. conditional alignment = chamfer option only; 7. /adapt = prototype-refresh,
+   not full retrain.
+
+## Threats to validity
+- PA inflation → dual reporting + flagged tables. Test-label leakage → val-only thresholds/norm/prototypes
+  (audit in Phase 11). Synthetic→real gap → SMD/SMAP loaders ready, graceful skip. Single-seed smoke claims →
+  explicitly labeled pipeline-proof; paper claims await full runs. Random-encoder AUC shows data easiness —
+  reported, not hidden.
 
 ## Phase 7 — API + dashboard (implemented)
 - Bundle = one dir (encoder.pt, prototypes.npy, stats.json, config.yaml); /detect (JSON/CSV, pydantic,

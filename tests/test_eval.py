@@ -1,10 +1,12 @@
 """Phase-2 tests: metrics vs hand-computed + sklearn, PA behaviour, thresholds, transfer flag."""
+
 import numpy as np
-from sklearn.metrics import precision_score, recall_score, f1_score
-from tsad.eval.metrics import strict_metrics, pa_metrics, event_wise_f1, range_based_f1
+from sklearn.metrics import f1_score, precision_score, recall_score
+
+from tsad.eval.bootstrap import aggregate_seeds, bootstrap_ci
+from tsad.eval.metrics import event_wise_f1, pa_metrics, range_based_f1, strict_metrics
 from tsad.eval.point_adjust import point_adjust
-from tsad.eval.threshold import select_threshold, best_f1_threshold, percentile_threshold
-from tsad.eval.bootstrap import bootstrap_ci, aggregate_seeds
+from tsad.eval.threshold import best_f1_threshold, percentile_threshold, select_threshold
 from tsad.eval.transfer import transfer_report
 
 
@@ -55,7 +57,9 @@ def test_threshold_val_only():
     va_y = np.array([0, 0, 0, 1, 1])
     t = best_f1_threshold(va_y, va_s)
     assert 0.2 < t <= 0.85  # separates normal from anomalous val
-    assert select_threshold("percentile", va_s[:3], percentile=50) == percentile_threshold(va_s[:3], 50)
+    assert select_threshold("percentile", va_s[:3], percentile=50) == percentile_threshold(
+        va_s[:3], 50
+    )
     assert select_threshold("fixed", va_s, fixed=0.7) == 0.7
     # POT returns finite threshold from normal scores only (no labels)
     assert np.isfinite(select_threshold("pot", np.random.RandomState(0).rand(500)))

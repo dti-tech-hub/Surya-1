@@ -1,5 +1,7 @@
 """E3: alignment comparison — none vs uniform MMD/CORAL/DANN vs adaptive-full."""
+
 from __future__ import annotations
+
 import sys
 from pathlib import Path
 
@@ -7,16 +9,30 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT))
 from experiments.common import seed_cfg
-from scripts.adapt import prep, run_condition, CONDITIONS
+from scripts.adapt import CONDITIONS, prep, run_condition
 from tsad.logging_utils import get_logger
 
 EXTRA = {
-    "uniform-coral": {"method": "coral", "use_gate": False, "use_weights": False,
-                      "use_monitor": False, "alpha": 0.5, "beta": 0.0, "gamma": 0.0,
-                      "sources": "all"},
-    "uniform-dann": {"method": "dann", "use_gate": False, "use_weights": False,
-                     "use_monitor": False, "alpha": 0.5, "beta": 0.0, "gamma": 0.0,
-                     "sources": "all"},
+    "uniform-coral": {
+        "method": "coral",
+        "use_gate": False,
+        "use_weights": False,
+        "use_monitor": False,
+        "alpha": 0.5,
+        "beta": 0.0,
+        "gamma": 0.0,
+        "sources": "all",
+    },
+    "uniform-dann": {
+        "method": "dann",
+        "use_gate": False,
+        "use_weights": False,
+        "use_monitor": False,
+        "alpha": 0.5,
+        "beta": 0.0,
+        "gamma": 0.0,
+        "sources": "all",
+    },
 }
 
 

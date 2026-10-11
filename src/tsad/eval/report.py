@@ -1,5 +1,7 @@
 """Results table writer: CSV + markdown (strict and PA side-by-side, PA flagged)."""
+
 from __future__ import annotations
+
 import csv
 from pathlib import Path
 
@@ -14,10 +16,21 @@ def write_table(rows: list[dict], out_prefix: str | Path) -> tuple[Path, Path]:
         w.writeheader()
         for r in rows:
             w.writerow({k: (round(v, 4) if isinstance(v, float) else v) for k, v in r.items()})
-    md = ["# Results (strict + PA — PA inflates, compare strict_*)", "",
-          "| " + " | ".join(keys) + " |", "| " + " | ".join("---" for _ in keys) + " |"]
+    md = [
+        "# Results (strict + PA — PA inflates, compare strict_*)",
+        "",
+        "| " + " | ".join(keys) + " |",
+        "| " + " | ".join("---" for _ in keys) + " |",
+    ]
     for r in rows:
-        md.append("| " + " | ".join(str(round(r.get(k, ''), 4) if isinstance(r.get(k), float) else r.get(k, '')) for k in keys) + " |")
+        md.append(
+            "| "
+            + " | ".join(
+                str(round(r.get(k, ""), 4) if isinstance(r.get(k), float) else r.get(k, ""))
+                for k in keys
+            )
+            + " |"
+        )
     md_p = out_prefix.with_suffix(".md")
     md_p.write_text("\n".join(md) + "\n")
     return csv_p, md_p

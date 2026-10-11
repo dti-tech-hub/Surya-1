@@ -1,8 +1,10 @@
 """Phase-2 baseline tests: interface contract + tiny synthetic run for every baseline."""
+
 import numpy as np
-from tsad.data.synthetic import SyntheticDataset
-from tsad.data.normalize import PerDomainNormalizer
+
 from tsad.baselines import all_baselines
+from tsad.data.normalize import PerDomainNormalizer
+from tsad.data.synthetic import SyntheticDataset
 from tsad.eval.metrics import strict_metrics
 
 

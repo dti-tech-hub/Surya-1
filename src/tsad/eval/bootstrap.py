@@ -1,11 +1,20 @@
 """Bootstrap CIs + multi-seed mean±std aggregation."""
+
 from __future__ import annotations
+
 import numpy as np
+
 from tsad.eval.metrics import prf_from_pred
 
 
-def bootstrap_ci(y: np.ndarray, pred: np.ndarray, metric: str = "f1",
-                 n_boot: int = 1000, ci: float = 0.95, seed: int = 0) -> dict:
+def bootstrap_ci(
+    y: np.ndarray,
+    pred: np.ndarray,
+    metric: str = "f1",
+    n_boot: int = 1000,
+    ci: float = 0.95,
+    seed: int = 0,
+) -> dict:
     """Resample (T,) pairs with replacement; percentile CI over metric."""
     rng = np.random.default_rng(seed)
     y, pred = np.asarray(y).ravel(), np.asarray(pred).ravel()

@@ -1,10 +1,15 @@
 """Embedding visualization (t-SNE default; UMAP if installed)."""
+
 from __future__ import annotations
+
 from pathlib import Path
+
 import numpy as np
 
 
-def plot_embeddings(Z: np.ndarray, labels: np.ndarray, path: str | Path, title: str = "embeddings") -> Path:
+def plot_embeddings(
+    Z: np.ndarray, labels: np.ndarray, path: str | Path, title: str = "embeddings"
+) -> Path:
     import matplotlib
 
     matplotlib.use("Agg")

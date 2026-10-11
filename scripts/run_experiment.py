@@ -1,5 +1,7 @@
 """Experiment dispatcher: --exp e1..e8 | --all-smoke | --all. Multi-seed, tables+plots+stats."""
+
 from __future__ import annotations
+
 import argparse
 import sys
 from pathlib import Path
@@ -7,37 +9,64 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT))
+from experiments import common as C
+from experiments import (
+    e1_singledomain,
+    e2_transfer,
+    e3_alignment,
+    e4_negtransfer,
+    e5_ablation,
+    e6_explain,
+    e7_sensitivity,
+    e8_efficiency,
+)
 from tsad.config import load_config
 from tsad.logging_utils import get_logger
-from experiments import common as C
-from experiments import (e1_singledomain, e2_transfer, e3_alignment, e4_negtransfer,
-                         e5_ablation, e6_explain, e7_sensitivity, e8_efficiency)
 
-EXPS = {"e1": e1_singledomain, "e2": e2_transfer, "e3": e3_alignment, "e4": e4_negtransfer,
-        "e5": e5_ablation, "e6": e6_explain, "e7": e7_sensitivity, "e8": e8_efficiency}
-TITLES = {"e1": "E1 single-domain", "e2": "E2 transfer pairs", "e3": "E3 alignment comparison",
-          "e4": "E4 negative transfer", "e5": "E5 ablations", "e6": "E6 explainability",
-          "e7": "E7 sensitivity", "e8": "E8 efficiency"}
+EXPS = {
+    "e1": e1_singledomain,
+    "e2": e2_transfer,
+    "e3": e3_alignment,
+    "e4": e4_negtransfer,
+    "e5": e5_ablation,
+    "e6": e6_explain,
+    "e7": e7_sensitivity,
+    "e8": e8_efficiency,
+}
+TITLES = {
+    "e1": "E1 single-domain",
+    "e2": "E2 transfer pairs",
+    "e3": "E3 alignment comparison",
+    "e4": "E4 negative transfer",
+    "e5": "E5 ablations",
+    "e6": "E6 explainability",
+    "e7": "E7 sensitivity",
+    "e8": "E8 efficiency",
+}
 
 
-def run_one(name: str, cfg, seeds: list[int], outdir: Path, smoke: bool,
-            epochs: int) -> list[dict]:
+def run_one(name: str, cfg, seeds: list[int], outdir: Path, smoke: bool, epochs: int) -> list[dict]:
     log = get_logger("exp")
     log.info(f"== {TITLES[name]} seeds={seeds} smoke={smoke} ==")
     mod = EXPS[name]
     import inspect
 
     C.ensure_defaults(cfg)
-    kw = dict(seeds=seeds, outdir=str(outdir / name), smoke=smoke)
+    kw = {"seeds": seeds, "outdir": str(outdir / name), "smoke": smoke}
     if "epochs" in inspect.signature(mod.run).parameters:
         kw["epochs"] = epochs
     rows = mod.run(cfg, **kw)
     C.save_all(rows, str(outdir / f"{name}{'_smoke' if smoke else ''}"))
     if name in ("e1", "e3", "e4", "e5", "e7") and rows and "strict_f1" in rows[0]:
+
         def _label(r):
-            parts = [str(r[k]) for k in ("harmful_kind", "condition", "pair", "ablation",
-                                         "alpha", "tau", "model") if k in r]
+            parts = [
+                str(r[k])
+                for k in ("harmful_kind", "condition", "pair", "ablation", "alpha", "tau", "model")
+                if k in r
+            ]
             return "|".join(parts)
+
         cats, series = [], {}
         for r in rows:
             lab = _label(r)

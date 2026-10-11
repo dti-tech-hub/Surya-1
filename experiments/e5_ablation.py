@@ -1,5 +1,7 @@
 """E5: ablations — encoder type + alignment components + window/k ablations (smoke subset)."""
+
 from __future__ import annotations
+
 import sys
 from pathlib import Path
 
@@ -7,9 +9,10 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT))
 from omegaconf import OmegaConf
+
 from experiments.common import seed_cfg
+from scripts.adapt import CONDITIONS, prep, run_condition
 from scripts.train import run_single_domain
-from scripts.adapt import prep, run_condition, CONDITIONS
 from tsad.logging_utils import get_logger
 
 ALIGN_ABL = {

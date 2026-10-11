@@ -3,9 +3,12 @@
 Proxies (no labels): source-val contrastive loss + target-val compactness.
 Worse-than-baseline for `patience` epochs -> halve alpha (floor 0); keep best snapshot for rollback.
 """
+
 from __future__ import annotations
+
 import copy
-import torch.nn as nn
+
+from torch import nn
 
 
 class NegTransferMonitor:
@@ -32,8 +35,9 @@ class NegTransferMonitor:
                 self.alpha = max(self.min_alpha, self.alpha * self.factor)
                 self.bad = 0
                 if self.snapshot is not None:  # rollback to best-known weights
-                    module.load_state_dict({k: v.to(module.state_dict()[k].device)
-                                            for k, v in self.snapshot.items()})
+                    module.load_state_dict(
+                        {k: v.to(module.state_dict()[k].device) for k, v in self.snapshot.items()}
+                    )
                     info["rolled_back"] = True
                 info["alpha_mult"] = self.alpha
         return info

@@ -1,11 +1,14 @@
 """Shared experiment helpers: seeding, table IO (CSV/MD/LaTeX), stats, plots."""
+
 from __future__ import annotations
+
 from copy import deepcopy
 from pathlib import Path
+
 import numpy as np
-from tsad.seed import set_seed
+
 from tsad.eval.report import write_table
-from tsad.eval.bootstrap import aggregate_seeds
+from tsad.seed import set_seed
 
 
 def ensure_defaults(cfg):
@@ -40,15 +43,28 @@ def save_all(rows: list[dict], out_prefix: str | Path) -> dict:
     return {"csv": str(cp), "md": str(mp), "tex": str(tp)}
 
 
-def to_latex(rows: list[dict], caption: str = "Results (mean values)", label: str = "tab:res") -> str:
+def to_latex(
+    rows: list[dict], caption: str = "Results (mean values)", label: str = "tab:res"
+) -> str:
     if not rows:
         return "% empty table\n"
     keys = sorted({k for r in rows for k in r})
     head = " & ".join(_tex(k) for k in keys) + r" \\"
     body = "\n".join(" & ".join(_tex_cell(r.get(k, "")) for k in keys) + r" \\" for r in rows)
-    return ("\\begin{table}[h]\n\\centering\n\\caption{" + caption + "}\n\\label{" + label + "}\n" +
-            "\\begin{tabular}{" + "l" * len(keys) + "}\n\\toprule\n" + head +
-            "\n\\midrule\n" + body + "\n\\bottomrule\n\\end{tabular}\n\\end{table}\n")
+    return (
+        "\\begin{table}[h]\n\\centering\n\\caption{"
+        + caption
+        + "}\n\\label{"
+        + label
+        + "}\n"
+        + "\\begin{tabular}{"
+        + "l" * len(keys)
+        + "}\n\\toprule\n"
+        + head
+        + "\n\\midrule\n"
+        + body
+        + "\n\\bottomrule\n\\end{tabular}\n\\end{table}\n"
+    )
 
 
 def _tex(s: str) -> str:
@@ -68,14 +84,17 @@ def paired_stats(a: list[float], b: list[float]) -> dict:
     try:
         from scipy import stats
 
-        return {"t_p": round(float(stats.ttest_rel(a, b).pvalue), 4),
-                "w_p": round(float(stats.wilcoxon(a, b).pvalue), 4)}
+        return {
+            "t_p": round(float(stats.ttest_rel(a, b).pvalue), 4),
+            "w_p": round(float(stats.wilcoxon(a, b).pvalue), 4),
+        }
     except Exception as e:
         return {"t_p": f"n/a ({e})", "w_p": "n/a"}
 
 
-def mean_std_table(per_seed: list[dict], group_keys: tuple[str, ...] = ("model",),
-                   metric: str = "strict_f1") -> list[dict]:
+def mean_std_table(
+    per_seed: list[dict], group_keys: tuple[str, ...] = ("model",), metric: str = "strict_f1"
+) -> list[dict]:
     """Aggregate per-seed rows into mean±std rows grouped by group_keys."""
     groups: dict[tuple, list[float]] = {}
     for r in per_seed:
@@ -84,15 +103,24 @@ def mean_std_table(per_seed: list[dict], group_keys: tuple[str, ...] = ("model",
     for key, vals in sorted(groups.items()):
         v = np.array(vals)
         row = {k: key[i] for i, k in enumerate(group_keys)}
-        row.update({metric + "_mean": round(float(v.mean()), 4),
-                    metric + "_std": round(float(v.std(ddof=1)) if len(v) > 1 else 0.0, 4),
-                    "n_seeds": len(v)})
+        row.update(
+            {
+                metric + "_mean": round(float(v.mean()), 4),
+                metric + "_std": round(float(v.std(ddof=1)) if len(v) > 1 else 0.0, 4),
+                "n_seeds": len(v),
+            }
+        )
         out.append(row)
     return out
 
 
-def barplot(cats: list[str], series: dict[str, list[float]], path: str | Path,
-            title: str = "", ylabel: str = "strict_F1") -> Path:
+def barplot(
+    cats: list[str],
+    series: dict[str, list[float]],
+    path: str | Path,
+    title: str = "",
+    ylabel: str = "strict_F1",
+) -> Path:
     import matplotlib
 
     matplotlib.use("Agg")
@@ -116,8 +144,9 @@ def barplot(cats: list[str], series: dict[str, list[float]], path: str | Path,
     return path
 
 
-def heatmap(mat: np.ndarray, xs: list[str], ys: list[str], path: str | Path,
-            title: str = "") -> Path:
+def heatmap(
+    mat: np.ndarray, xs: list[str], ys: list[str], path: str | Path, title: str = ""
+) -> Path:
     import matplotlib
 
     matplotlib.use("Agg")

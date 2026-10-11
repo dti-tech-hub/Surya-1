@@ -1,13 +1,20 @@
 """Domain registry: stats + transfer protocols (unlabeled-target discipline)."""
+
 from __future__ import annotations
+
 import numpy as np
+
 from tsad.data.base import DomainData
 
 
 def domain_stats(d: DomainData) -> dict:
     def _s(x: np.ndarray) -> dict:
-        return {"mean": float(np.mean(x)), "std": float(np.std(x)),
-                "len": int(len(x)), "channels": int(x.shape[1])}
+        return {
+            "mean": float(np.mean(x)),
+            "std": float(np.std(x)),
+            "len": len(x),
+            "channels": int(x.shape[1]),
+        }
 
     return {
         "domain": d.domain_id,
@@ -37,11 +44,16 @@ class DomainRegistry:
 
     def lodo(self) -> list[tuple[dict, dict]]:
         """Leave-one-domain-out: [(sources, {held_out}), ...]."""
-        return [({i: d for i, d in self.domains.items() if i != h}, {h: self.domains[h]})
-                for h in self.ids()]
+        return [
+            ({i: d for i, d in self.domains.items() if i != h}, {h: self.domains[h]})
+            for h in self.ids()
+        ]
 
     def multi_source(self, target: str) -> tuple[dict, dict]:
-        return ({i: d for i in self.ids() if i != target}, {target: self.domains[target]})
+        return (
+            {i: self.domains[i] for i in self.ids() if i != target},
+            {target: self.domains[target]},
+        )
 
     def summary(self) -> list[dict]:
         return [domain_stats(d) for d in self.domains.values()]

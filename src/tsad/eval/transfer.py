@@ -1,9 +1,11 @@
 """Transfer metrics: source-only vs adapted vs target-only; negative-transfer flag."""
+
 from __future__ import annotations
 
 
-def transfer_report(source_only_f1: float, adapted_f1: float,
-                    target_only_f1: float | None = None) -> dict:
+def transfer_report(
+    source_only_f1: float, adapted_f1: float, target_only_f1: float | None = None
+) -> dict:
     """gain = adapted - source_only. negative_transfer = adapted < source_only (strictly worse)."""
     gain = float(adapted_f1 - source_only_f1)
     out = {

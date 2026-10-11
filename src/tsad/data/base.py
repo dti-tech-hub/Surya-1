@@ -1,7 +1,10 @@
 """Common interface for all TSAD datasets. Tensor convention: (T, C) series, (B, T, C) windows."""
+
 from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+
 import numpy as np
 
 

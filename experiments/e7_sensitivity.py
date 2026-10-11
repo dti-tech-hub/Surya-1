@@ -1,5 +1,7 @@
 """E7: sensitivity — alpha x tau grid for adaptive-full (+ threshold rule in full mode)."""
+
 from __future__ import annotations
+
 import sys
 from pathlib import Path
 
@@ -7,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT))
 from experiments.common import seed_cfg
-from scripts.adapt import prep, run_condition, CONDITIONS
+from scripts.adapt import CONDITIONS, prep, run_condition
 from tsad.logging_utils import get_logger
 
 

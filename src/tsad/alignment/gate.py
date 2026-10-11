@@ -3,9 +3,11 @@
 Sigmoid gate (default) or hard-concrete (L0-style). Sparsity/entropy reg keeps selection meaningful:
 only invariant dims are aligned; domain-specific dims pass through unaligned.
 """
+
 from __future__ import annotations
+
 import torch
-import torch.nn as nn
+from torch import nn
 
 
 class FeatureGate(nn.Module):

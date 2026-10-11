@@ -1,5 +1,7 @@
 """Window-score -> timestamp-score mapping, smoothing, hybrid combination."""
+
 from __future__ import annotations
+
 import numpy as np
 
 

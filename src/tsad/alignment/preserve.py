@@ -5,7 +5,9 @@
 - no_collapse: total variance must not fall below a floor (alignment must not erase
   variance directions that carry anomaly information).
 """
+
 from __future__ import annotations
+
 import torch
 
 
@@ -15,8 +17,9 @@ def compactness(Z: torch.Tensor) -> torch.Tensor:
     return ((Z - c) ** 2).mean()
 
 
-def pseudo_margin(normal_scores: torch.Tensor, pseudo_scores: torch.Tensor,
-                  margin: float = 1.0) -> torch.Tensor:
+def pseudo_margin(
+    normal_scores: torch.Tensor, pseudo_scores: torch.Tensor, margin: float = 1.0
+) -> torch.Tensor:
     """Hinge: pseudo-anomaly scores must exceed normal mean by >= margin."""
     return torch.clamp(margin - (pseudo_scores.mean() - normal_scores.mean()), min=0.0)
 
@@ -27,9 +30,14 @@ def no_collapse(Z: torch.Tensor, floor: float = 1e-3) -> torch.Tensor:
     return torch.clamp(floor - v, min=0.0)
 
 
-def preserve_loss(Z_normal: torch.Tensor, pseudo_scores: torch.Tensor | None = None,
-                  normal_scores: torch.Tensor | None = None, beta_c: float = 1.0,
-                  beta_m: float = 1.0, beta_v: float = 1.0) -> torch.Tensor:
+def preserve_loss(
+    Z_normal: torch.Tensor,
+    pseudo_scores: torch.Tensor | None = None,
+    normal_scores: torch.Tensor | None = None,
+    beta_c: float = 1.0,
+    beta_m: float = 1.0,
+    beta_v: float = 1.0,
+) -> torch.Tensor:
     out = beta_c * compactness(Z_normal) + beta_v * no_collapse(Z_normal)
     if pseudo_scores is not None and normal_scores is not None:
         out = out + beta_m * pseudo_margin(normal_scores, pseudo_scores)

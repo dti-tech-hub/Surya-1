@@ -1,5 +1,7 @@
 """E1: single-domain benchmark — baselines vs contrastive (no adaptation)."""
+
 from __future__ import annotations
+
 import sys
 from pathlib import Path
 

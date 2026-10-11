@@ -1,14 +1,30 @@
 """Data package exports."""
-from tsad.data.base import BaseTSADDataset, DomainData, DatasetMissingError
-from tsad.data.synthetic import SyntheticDataset
-from tsad.data.datasets import SMDDataset, SMAPMSLDataset, UCRDataset, SWaTDataset, YahooDataset
-from tsad.data.windows import sliding_windows, window_label
-from tsad.data.splits import split_series, time_ordered_bounds
+
+from tsad.data.augment import AUGMENTS, AugmentPipeline
+from tsad.data.base import BaseTSADDataset, DatasetMissingError, DomainData
+from tsad.data.datasets import SMAPMSLDataset, SMDDataset, SWaTDataset, UCRDataset, YahooDataset
 from tsad.data.normalize import PerDomainNormalizer
 from tsad.data.registry import DomainRegistry
-from tsad.data.augment import AugmentPipeline, AUGMENTS
+from tsad.data.splits import split_series, time_ordered_bounds
+from tsad.data.synthetic import SyntheticDataset
+from tsad.data.windows import sliding_windows, window_label
 
-__all__ = ["BaseTSADDataset", "DomainData", "DatasetMissingError", "SyntheticDataset",
-           "SMDDataset", "SMAPMSLDataset", "UCRDataset", "SWaTDataset", "YahooDataset",
-           "sliding_windows", "window_label", "split_series", "time_ordered_bounds",
-           "PerDomainNormalizer", "DomainRegistry", "AugmentPipeline", "AUGMENTS"]
+__all__ = [
+    "AUGMENTS",
+    "AugmentPipeline",
+    "BaseTSADDataset",
+    "DatasetMissingError",
+    "DomainData",
+    "DomainRegistry",
+    "PerDomainNormalizer",
+    "SMAPMSLDataset",
+    "SMDDataset",
+    "SWaTDataset",
+    "SyntheticDataset",
+    "UCRDataset",
+    "YahooDataset",
+    "sliding_windows",
+    "split_series",
+    "time_ordered_bounds",
+    "window_label",
+]
