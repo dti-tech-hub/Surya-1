@@ -1,0 +1,5 @@
+# docs/DATA_SETUP.md content is in docs/; this config tracks the remaining real datasets.
+smap_msl: {root: data/smap_msl, note: "public mirror; see download_notes.py"}
+ucr: {root: data/ucr, note: "convert to .npz; see download_notes.py"}
+swat: {root: data/swat, note: "ACCESS-REQUIRED (iTrust request)"}
+yahoo: {root: data/yahoo, note: "ACCESS-REQUIRED (Webscope L6)"}

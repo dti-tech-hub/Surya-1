@@ -1,0 +1,7 @@
+data:
+  name: smd
+  root: data/smd
+  window: 100
+  stride: 10
+protocols: [single, source-target, lodo, multi-source]
+note: "If data/smd missing, loader raises DatasetMissingError with download URL (see docs/DATA_SETUP.md)."
