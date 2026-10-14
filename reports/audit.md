@@ -11,9 +11,9 @@
 | leak/threshold-val-only | PASS | no test-label thresholding |
 | repro/synthetic | PASS | same seed -> identical series+labels+masks |
 | repro/init | PASS | same seed -> identical init forward |
-| gate/pytest | PASS | 61 passed, 2 warnings in 21.71s |
+| gate/pytest | PASS | 61 passed, 2 warnings in 27.74s |
 | gate/ruff | PASS | All checks passed! |
-| gate/black | PASS | 102 files would be left unchanged. |
+| gate/black | PASS | 87 files would be left unchanged. |
 | gate/mypy | PASS | Success: no issues found in 63 source files |
 | obj/O1 | PASS | code+config+test+exp+figure present (E1) |
 | obj/O2 | PASS | code+config+test+exp+figure present (E3) |
@@ -30,9 +30,9 @@
 
 ## Gates
 
-- pytest: PASS — 61 passed, 2 warnings in 21.71s
+- pytest: PASS — 61 passed, 2 warnings in 27.74s
 - ruff: PASS — All checks passed!
-- black: PASS — 102 files would be left unchanged.
+- black: PASS — 87 files would be left unchanged.
 - mypy: PASS — Success: no issues found in 63 source files
 
 ## O1–O4 mapping

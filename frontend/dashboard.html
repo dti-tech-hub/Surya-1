@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TSAD · Explainable Anomaly Detection</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#0b1020; --panel:#141b31; --panel2:#1b2440; --line:#26315a;
+    --txt:#e8ecf8; --muted:#93a0c4; --accent:#4f8cff; --accent2:#22d3ee;
+    --good:#34d399; --warn:#fbbf24; --bad:#f87171;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1200px 700px at 15% -10%,#1a2450 0%,var(--bg) 55%);
+       color:var(--txt);font:15px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  header{padding:26px 32px 18px;border-bottom:1px solid var(--line);
+         display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between}
+  h1{font-size:21px;margin:0;letter-spacing:.2px}
+  h1 span{background:linear-gradient(90deg,var(--accent),var(--accent2));
+          -webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{color:var(--muted);font-size:13px;margin-top:3px}
+  .pill{background:var(--panel2);border:1px solid var(--line);border-radius:999px;
+        padding:5px 12px;font-size:12px;color:var(--muted)}
+  .pill b{color:var(--txt)}
+  main{padding:22px 32px 48px;max-width:1500px;margin:0 auto}
+  .grid{display:grid;gap:18px}
+  @media(min-width:1100px){.grid{grid-template-columns:330px 1fr}}
+  .card{background:linear-gradient(180deg,var(--panel),#111830);
+        border:1px solid var(--line);border-radius:14px;padding:18px;
+        box-shadow:0 12px 30px rgba(0,0,0,.28)}
+  .card h2{font-size:13px;text-transform:uppercase;letter-spacing:.9px;
+           color:var(--muted);margin:0 0 14px;font-weight:600}
+  label{font-size:12px;color:var(--muted);display:block;margin:14px 0 6px}
+  select,input[type=file]{width:100%;background:var(--panel2);color:var(--txt);
+        border:1px solid var(--line);border-radius:9px;padding:9px 11px;font-size:14px}
+  input[type=file]{padding:8px}
+  button{width:100%;margin-top:14px;padding:11px;border:0;border-radius:10px;cursor:pointer;
+         font-weight:600;font-size:14px;color:#06122b;
+         background:linear-gradient(90deg,var(--accent),var(--accent2))}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  button.ghost{background:var(--panel2);color:var(--txt);border:1px solid var(--line)}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:18px}
+  .stat{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:13px 15px}
+  .stat .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px}
+  .stat .v{font-size:22px;font-weight:650;margin-top:3px}
+  .chartbox{position:relative;height:330px}
+  .note{color:var(--muted);font-size:12.5px;margin-top:10px}
+  .ok{color:var(--good)} .no{color:var(--bad)} .mid{color:var(--warn)}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+  .chip{background:var(--panel2);border:1px solid var(--line);border-radius:8px;
+        padding:6px 10px;font-size:12.5px;cursor:pointer}
+  .chip:hover{border-color:var(--accent)}
+  .chip.on{background:rgba(79,140,255,.18);border-color:var(--accent)}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+  th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.6px}
+  .bar{height:9px;border-radius:6px;background:#26315a;overflow:hidden;min-width:90px}
+  .bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+  pre{background:#0d1428;border:1px solid var(--line);border-radius:10px;padding:12px;
+      overflow:auto;font-size:12px;max-height:340px;color:#cbd5f5}
+  .empty{color:var(--muted);text-align:center;padding:70px 20px}
+  .msg{padding:10px 12px;border-radius:9px;font-size:13px;margin-top:12px;display:none}
+  .msg.err{background:rgba(248,113,113,.12);border:1px solid var(--bad);display:block}
+  .msg.busy{background:rgba(79,140,255,.12);border:1px solid var(--accent);display:block}
+  code{background:#0d1428;border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:12.5px}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Adaptive Domain-Aware <span>Explainable TSAD</span></h1>
+    <div class="sub">Self-supervised contrastive representations · adaptive cross-domain alignment · 6-part explanations</div>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <span class="pill">API <b id="apiState">checking…</b></span>
+    <span class="pill">Model <b id="modelName">—</b></span>
+  </div>
+</header>
+
+<main>
+  <div class="grid">
+    <!-- ── controls ─────────────────────────────────────────── -->
+    <div>
+      <div class="card">
+        <h2>1 · Source</h2>
+        <label for="apiBase">API base URL</label>
+        <input id="apiBase" value="http://127.0.0.1:8000" />
+        <label for="modelSel">Bundle</label>
+        <select id="modelSel"><option>loading…</option></select>
+
+        <label for="csvFile">CSV series (T rows × C channels, no header)</label>
+        <input type="file" id="csvFile" accept=".csv,text/csv" />
+        <button id="runBtn">Detect anomalies</button>
+        <button class="ghost" id="sampleBtn">Use built-in sample</button>
+        <div class="msg" id="msg"></div>
+        <div class="note">Try <code>samples/sample_anomaly.csv</code> — a spike injected at t=50–55.</div>
+      </div>
+
+      <div class="card" style="margin-top:18px">
+        <h2>2 · Threshold</h2>
+        <input type="range" id="thr" min="0" max="100" value="50" style="width:100%" />
+        <div class="note" id="thrNote">calibrated threshold — drag to re-flag client-side</div>
+      </div>
+
+      <div class="card" style="margin-top:18px">
+        <h2>Raw explanation JSON</h2>
+        <pre id="raw">—</pre>
+      </div>
+    </div>
+
+    <!-- ── main ─────────────────────────────────────────────── -->
+    <div>
+      <div class="stats">
+        <div class="stat"><div class="k">Timesteps</div><div class="v" id="sT">—</div></div>
+        <div class="stat"><div class="k">Flagged</div><div class="v" id="sF">—</div></div>
+        <div class="stat"><div class="k">Flag rate</div><div class="v" id="sR">—</div></div>
+        <div class="stat"><div class="k">Max score</div><div class="v" id="sM">—</div></div>
+        <div class="stat"><div class="k">Mean score</div><div class="v" id="sA">—</div></div>
+      </div>
+
+      <div class="card">
+        <h2>Anomaly score over time</h2>
+        <div class="chartbox"><canvas id="chart"></canvas></div>
+        <div class="note">Click any point to inspect that timestep’s explanation · shaded band = flagged region</div>
+      </div>
+
+      <div class="card" id="flagCard" style="margin-top:18px;display:none">
+        <h2>Flagged timesteps — click to inspect</h2>
+        <div class="chips" id="chips"></div>
+      </div>
+
+      <div class="card" id="expCard" style="margin-top:18px;display:none">
+        <h2 id="expTitle">Explanation</h2>
+        <p id="expSummary" style="font-size:14.5px"></p>
+
+        <div style="display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
+          <div>
+            <h3 style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">
+              Attribution (integrated gradients)</h3>
+            <table><thead><tr><th>Channel</th><th>Importance</th><th></th></tr></thead>
+              <tbody id="attrBody"></tbody></table>
+          </div>
+          <div>
+            <h3 style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">
+              Prototype proximity</h3>
+            <table><thead><tr><th>Prototype</th><th>Distance</th></tr></thead>
+              <tbody id="protoBody"></tbody></table>
+            <div class="note" id="crossNote"></div>
+          </div>
+        </div>
+
+        <div class="note" id="cfNote" style="margin-top:14px"></div>
+        <div class="note" id="attNote" style="margin-top:6px"></div>
+      </div>
+
+      <div class="card" id="empty" style="margin-top:18px">
+        <div class="empty">
+          <div style="font-size:34px">📈</div>
+          <p><b>No series loaded.</b></p>
+          <p class="note">Upload a CSV or load the built-in sample, then click <b>Detect anomalies</b>.<br>
+             Start the API with <code>python scripts/serve.py</code> (see README).</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const API_DEFAULT = "http://127.0.0.1:8000";
+let chart = null, series = null, det = null, thr = null, model = null;
+
+/* ── helpers ─────────────────────────────────────────────── */
+const apiBase = () => $("apiBase").value.trim().replace(/\/+$/,"");
+function say(msg, kind="err"){ const m=$("msg"); m.textContent=msg; m.className="msg "+(kind==="busy"?"busy":"err"); }
+function clearMsg(){ $("msg").className="msg"; }
+function fmt(v,d=2){ return (v===null||v===undefined||Number.isNaN(v)) ? "—" : Number(v).toFixed(d); }
+function ts(v){ return Number(v).toFixed(1).replace(/\.0$/,""); }
+
+/* ── boot: health + models ───────────────────────────────── */
+async function boot(){
+  try{
+    const h = await fetch(apiBase()+"/health", {signal:AbortSignal.timeout(4000)});
+    $("apiState").textContent = h.ok ? "online" : "error";
+    $("apiState").className = h.ok ? "ok" : "no";
+  }catch(e){ $("apiState").textContent="offline"; $("apiState").className="no"; return; }
+
+  try{
+    const r = await fetch(apiBase()+"/models");
+    const {models} = await r.json();
+    $("modelSel").innerHTML = models.map(m=>`<option>${m}</option>`).join("");
+    model = models[0]; $("modelName").textContent = model;
+  }catch(e){ say("Could not list models: "+e.message); }
+}
+$("apiBase").addEventListener("change", boot);
+
+/* ── built-in sample ─────────────────────────────────────── */
+const SAMPLE = (()=>{ // 200x2, deterministic, spike at t=50..55 on ch0
+  let s=7, rows=[];
+  const rnd=()=>{ s=(s*1103515245+12345)%2147483648; return s/2147483648*2-1; };
+  for(let t=0;t<200;t++){
+    const base0=Math.sin(t/9)*0.6+Math.sin(t/23)*0.4, base1=Math.cos(t/13)*0.5;
+    const spike=(t>=50&&t<56)?3.2:0;
+    rows.push([base0+spike+rnd()*0.12, base1+rnd()*0.12]);
+  }
+  return rows;
+})();
+
+/* ── parse CSV → number[][] ──────────────────────────────── */
+function parseCSV(text){
+  const rows = text.trim().split(/\r?\n/).map(l=>l.trim()).filter(Boolean).map(l=>l.split(/[;,\t]+/));
+  if(!rows.length) throw new Error("file is empty");
+  const n = Math.min(...rows.map(r=>r.length));
+  if(!Number.isFinite(n) || n < 1) throw new Error("no numeric columns found");
+  return rows.map(r=>r.slice(0,n).map(v=>{ const x=Number(v); return Number.isFinite(x)?x:0; }));
+}
+
+/* ── detect ──────────────────────────────────────────────── */
+async function detect(){
+  clearMsg();
+  if(!model){ say("Select a bundle first (API offline?)."); return; }
+  let rows = series;
+  if(!rows){
+    const f = $("csvFile").files[0];
+    if(!f){ say("Choose a CSV file first, or click “Use built-in sample”."); return; }
+    try{ rows = parseCSV(await f.text()); }
+    catch(e){ say("CSV parse failed: "+e.message); return; }
+  }
+  say("Scoring windows…","busy");
+  $("runBtn").disabled = true;
+  try{
+    const r = await fetch(`${apiBase()}/detect`, {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({series: rows, model, domain_id:"domain_0"})
+    });
+    if(!r.ok) throw new Error(await r.text());
+    det = await r.json(); series = rows;
+    thr = det.threshold;
+    $("empty").style.display="none";
+    clearMsg(); render();
+  }catch(e){ say("Detect failed: "+e.message); }
+  finally{ $("runBtn").disabled=false; }
+}
+$("runBtn").addEventListener("click", detect);
+$("csvFile").addEventListener("change", ()=>{ series=null; });   // a new file wins over the built-in sample
+$("sampleBtn").addEventListener("click", ()=>{ series=SAMPLE; $("csvFile").value=""; detect(); });
+$("modelSel").addEventListener("change", e=>{ model=e.target.value; $("modelName").textContent=model; });
+
+/* ── threshold slider (client-side re-flag, no re-inference) ── */
+$("thr").addEventListener("input", e=>{
+  if(!det) return;
+  const max=Math.max(...det.scores), min=Math.min(...det.scores);
+  thr = min + (max-min)*(e.target.value/100);
+  render();
+});
+
+/* ── render ──────────────────────────────────────────────── */
+function render(){
+  const sc = det.scores, flags = det.scores.map(v=>v>=thr);
+  const n = sc.length, nf = flags.filter(Boolean).length;
+  $("sT").textContent=n; $("sF").textContent=nf;
+  $("sR").textContent=(100*nf/n).toFixed(1)+"%";
+  $("sM").textContent=fmt(Math.max(...sc));
+  $("sA").textContent=fmt(sc.reduce((a,b)=>a+b,0)/n);
+  $("thrNote").textContent = `threshold = ${fmt(thr,3)} (bundle calibration ${fmt(det.threshold,3)}) · ${nf}/${n} flagged`;
+
+  // chart: score line + flag band + threshold line
+  const labels = Array.from({length:n},(_,i)=>i);
+  const ctx = $("chart").getContext("2d");
+  if(chart) chart.destroy();
+  chart = new Chart(ctx,{
+    type:"line",
+    data:{ labels, datasets:[
+      { label:"anomaly score", data:sc, borderColor:"#4f8cff", borderWidth:1.6,
+        pointRadius:0, pointHoverRadius:5, tension:.15, fill:true,
+        backgroundColor:(c)=>{ const {ctx,chartArea}=c.chart;
+          if(!chartArea) return "rgba(79,140,255,.12)";
+          const g=ctx.createLinearGradient(0,chartArea.top,0,chartArea.bottom);
+          g.addColorStop(0,"rgba(79,140,255,.34)"); g.addColorStop(1,"rgba(79,140,255,0)");
+          return g; } },
+      { label:"threshold", data:Array(n).fill(thr), borderColor:"#fbbf24",
+        borderDash:[6,5], borderWidth:1.2, pointRadius:0, fill:false },
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false, interaction:{mode:"index",intersect:false},
+      plugins:{ legend:{labels:{color:"#93a0c4",boxWidth:12,font:{size:11}}},
+        tooltip:{ callbacks:{ title:(it)=>"t = "+it[0].label } } },
+      scales:{
+        x:{ ticks:{color:"#93a0c4",maxTicksLimit:14}, grid:{color:"rgba(38,49,90,.5)"} },
+        y:{ ticks:{color:"#93a0c4"}, grid:{color:"rgba(38,49,90,.5)"} } },
+      onClick:(e,els)=>{ if(els.length) inspect(Number(els[0].index)); }
+    },
+    plugins:[{ id:"flagband", beforeDatasetsDraw(c){
+      const {ctx,chartArea:a,scales:{x}}=c; if(!a) return;
+      ctx.save(); ctx.fillStyle="rgba(248,113,113,.16)";
+      for(let i=0;i<c.data.labels.length;i++){
+        if(c.data.datasets[0].data[i]>=thr){
+          const w=Math.max(2,(a.right-a.left)/c.data.labels.length);
+          ctx.fillRect(x.getPixelForValue(i)-w/2, a.top, w, a.bottom-a.top);
+        }
+      }
+      ctx.restore();
+    }}]
+  });
+
+  // flagged chips (cap 60)
+  const idx = flags.map((f,i)=>f?i:-1).filter(i=>i>=0);
+  $("flagCard").style.display = idx.length ? "block":"none";
+  $("chips").innerHTML = idx.slice(0,60).map(i=>`<span class="chip" data-i="${i}">t = ${i}</span>`).join("")
+    + (idx.length>60 ? `<span class="note">…and ${idx.length-60} more</span>` : "");
+  $("chips").querySelectorAll(".chip").forEach(c=>
+    c.onclick=()=>inspect(Number(c.dataset.i)));
+}
+
+/* ── explain ─────────────────────────────────────────────── */
+async function inspect(i){
+  document.querySelectorAll(".chip").forEach(c=>c.classList.toggle("on", Number(c.dataset.i)===i));
+  $("expCard").style.display="block";
+  $("expTitle").textContent = `Explanation · t = ${i}`;
+  $("expSummary").textContent = "Computing attribution, prototypes, counterfactual…";
+  $("attrBody").innerHTML=$("protoBody").innerHTML="";
+  try{
+    const r = await fetch(apiBase()+"/explain", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({series, model, t_start:i})
+    });
+    if(!r.ok) throw new Error(await r.text());
+    const e = await r.json(); paint(e);
+  }catch(err){ $("expSummary").innerHTML = `<span class="no">Explain failed: ${err.message}</span>`; }
+}
+
+function paint(e){
+  const p = e.parts || {};
+  $("expTitle").textContent = `Explanation · t = ${e.t_start}–${e.t_end} (window ${e.window_id})`;
+  $("expSummary").innerHTML = `<b>${p.summary || "—"}</b>`;
+
+  // attribution
+  const tc = (p.attribution && p.attribution.top_channels) || [];
+  const mx = Math.max(...tc.map(c=>Math.abs(c.importance)), 1e-9);
+  $("attrBody").innerHTML = tc.map(c=>`<tr>
+      <td>ch${c.channel}</td><td>${fmt(c.importance,4)}</td>
+      <td><div class="bar"><i style="width:${100*Math.abs(c.importance)/mx}%"></i></div></td></tr>`).join("")
+    || `<tr><td colspan="3" class="note">none</td></tr>`;
+
+  // prototypes
+  const pr = (p.prototype && p.prototype.nearest) || [];
+  const dmin = pr.length? pr[0].distance : 1;
+  $("protoBody").innerHTML = pr.map(x=>`<tr>
+      <td>#${x.proto_id}</td><td>${fmt(x.distance,3)}</td>
+      <td><div class="bar"><i style="width:${100*(1-x.distance/(dmin||1)*0.98+0.02)}%"></i></div></td></tr>`).join("")
+    || `<tr><td colspan="3" class="note">none</td></tr>`;
+  $("crossNote").textContent = p.cross_domain
+    ? `cross-domain: closest = ${p.cross_domain.closest_normal} · ${p.cross_domain.verdict}` : "";
+
+  // counterfactual + attention
+  const cf = p.counterfactual || {};
+  $("cfNote").innerHTML = cf.valid!==undefined
+    ? `Counterfactual: <b class="${cf.valid?"ok":"no"}">${cf.valid?"valid — edit restores a normal score":"not valid"}</b>`
+      + (cf.score_after!==undefined ? ` · score ${fmt(e.score,2)} → ${fmt(cf.score_after,2)}` : "")
+      + (cf.delta_l1!==undefined ? ` · L1 edit ${fmt(cf.delta_l1,2)}` : "")
+      + (cf.frac_changed!==undefined ? ` · ${(100*cf.frac_changed).toFixed(0)}% of entries changed` : "")
+    : "";
+  $("attNote").textContent = p.attention && p.attention.available===false
+    ? `Attention weights unavailable — ${p.attention.reason}.` : "";
+
+  $("raw").textContent = JSON.stringify(e, null, 2);
+}
+
+boot();
+</script>
+</body>
+</html>
